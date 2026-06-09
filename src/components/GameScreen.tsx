@@ -96,6 +96,42 @@ function getDistanceToSegment(px: number, py: number, ax: number, ay: number, bx
   return Math.hypot(px - nearestX, py - nearestY);
 }
 
+// BTD6-style Late Game health & speed scaling after Round 80 (Cumulative exponential per round)
+function getLateGameMultiplier(r: number): { hp: number; speed: number } {
+  let hpMult = 1.0;
+  let speedMult = 1.0;
+  if (r <= 80) {
+    return { hp: 1.0, speed: 1.0 };
+  }
+  
+  for (let i = 81; i <= r; i++) {
+    if (i <= 100) {
+      hpMult *= 1.02;
+      speedMult *= 1.02;
+    } else if (i <= 124) {
+      hpMult *= 1.05;
+      speedMult *= 1.05;
+    } else if (i <= 151) {
+      hpMult *= 1.15;
+      speedMult *= 1.15;
+    } else {
+      hpMult *= 1.35;
+      speedMult *= 1.35;
+    }
+  }
+  return { hp: hpMult, speed: speedMult };
+}
+
+// BTD6-style Income reduction per pop as game rounds progress
+function getIncomeMultiplier(r: number): number {
+  if (r <= 50) return 1.0;
+  if (r <= 60) return 0.50;  // After round 50 (50% value)
+  if (r <= 85) return 0.20;  // After round 60 (20% value)
+  if (r <= 100) return 0.10; // After round 85 (10% value)
+  if (r <= 121) return 0.05; // After round 100 (5% value)
+  return 0.02;               // After round 121 (2% value)
+}
+
 export const GameScreen: React.FC<GameScreenProps> = ({
   mapId,
   heroType,
@@ -603,14 +639,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 else if (difficulty === 'Hard' || difficulty === 'CHIMPS') speedMultiplierByDiff = 1.15;
 
                 // Fortified double-hp modifier
-                const initialHp = item.isFortified ? (item.type === 'Lead' ? spec.hp * 4 : spec.hp * 2) : spec.hp;
+                const lateScale = getLateGameMultiplier(round);
+                const initialHp = (item.isFortified ? (item.type === 'Lead' ? spec.hp * 4 : spec.hp * 2) : spec.hp) * lateScale.hp;
 
                 const inst: Bloon = {
                   id: `bloon_${Date.now()}_${Math.random()}`,
                   type: item.type as any,
                   x: pathStart.x,
                   y: pathStart.y,
-                  speed: spec.speed * speedMultiplierByDiff,
+                  speed: spec.speed * speedMultiplierByDiff * lateScale.speed,
                   hp: initialHp,
                   maxHp: initialHp,
                   size: spec.size,
@@ -1454,15 +1491,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         }
       }
 
-      // Give Cash reward
-      setCash((c) => c + b.reward);
+      // Give Cash reward (scales downward as rounds progress)
+      const incomeScale = getIncomeMultiplier(round);
+      const finalReward = b.reward * incomeScale;
+      setCash((c) => c + finalReward);
 
       // Create floating text cash
       floatingTextsRef.current.push({
         id: `c_${Date.now()}_${Math.random()}`,
         x: b.x,
         y: b.y,
-        text: `+$${b.reward}`,
+        text: `+$${finalReward.toFixed(2).replace(/\.00$/, '')}`,
         color: '#22c55e',
         life: 30,
       });
@@ -1525,14 +1564,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           if (difficulty === 'Easy') childSpeedByDiff *= 0.85;
           else if (difficulty === 'Hard' || difficulty === 'CHIMPS') childSpeedByDiff *= 1.15;
 
+          const lateScale = getLateGameMultiplier(round);
+          const childInitialHp = (sib.isFortified ? (sib.type === 'Lead' ? childStyle.hp * 4 : childStyle.hp * 2) : childStyle.hp) * lateScale.hp;
+
           const child: Bloon = {
             id: `bloon_child_${Date.now()}_${Math.random()}`,
             type: sib.type,
             x: b.x,
             y: b.y,
-            speed: childSpeedByDiff,
-            hp: sib.isFortified ? (sib.type === 'Lead' ? childStyle.hp * 4 : childStyle.hp * 2) : childStyle.hp,
-            maxHp: sib.isFortified ? (sib.type === 'Lead' ? childStyle.hp * 4 : childStyle.hp * 2) : childStyle.hp,
+            speed: childSpeedByDiff * lateScale.speed,
+            hp: childInitialHp,
+            maxHp: childInitialHp,
             size: childStyle.size,
             color: childStyle.color,
             reward: childStyle.reward,
@@ -1667,7 +1709,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-[9px] uppercase font-black leading-none opacity-80">Cash</span>
-              <span id="hud-cash" className="text-base font-black leading-none">${cash}</span>
+              <span id="hud-cash" className="text-base font-black leading-none">${Math.floor(cash)}</span>
             </div>
           </div>
 

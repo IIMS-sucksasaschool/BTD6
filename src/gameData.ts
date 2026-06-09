@@ -152,6 +152,89 @@ export const MAPS: GameMap[] = [
       { type: 'rock', x: 900, y: 800, size: 30 },
       { type: 'cactus', x: 500, y: 80, size: 25 }
     ]
+  },
+  {
+    id: 'sandy_shore',
+    name: 'Sandy Shore',
+    description: 'A tropical paradise where some sections wind directly near beautiful tidal lagoons. Water-based placements are natively supported.',
+    theme: 'desert',
+    trackWidth: 30,
+    bgColor: '#fef08a', // yellow-200
+    trackColor: '#ffedd5', // orange-50
+    borderColor: '#d97706', // amber-600
+    track: [
+      { x: 0, y: 150 },
+      { x: 600, y: 150 },
+      { x: 600, y: 400 },
+      { x: 150, y: 400 },
+      { x: 150, y: 800 },
+      { x: 1000, y: 800 }
+    ],
+    decorations: [
+      { type: 'water', x: 400, y: 550, size: 100 },
+      { type: 'tree', x: 400, y: 250, size: 45 },
+      { type: 'tree', x: 800, y: 300, size: 40 },
+      { type: 'cactus', x: 900, y: 600, size: 30 },
+      { type: 'rock', x: 750, y: 900, size: 35 }
+    ]
+  },
+  {
+    id: 'cosmic_clover',
+    name: 'Cosmic Clover',
+    description: 'A geometric clover-leaf pattern in the depth of space. Bloons travel along overlapping triple bypasses.',
+    theme: 'space',
+    trackWidth: 26,
+    bgColor: '#0c0a09', // stone-950
+    trackColor: '#3b0764', // purple-950
+    borderColor: '#a855f7', // purple-500
+    track: [
+      { x: 500, y: 0 },
+      { x: 500, y: 200 },
+      { x: 200, y: 200 },
+      { x: 200, y: 500 },
+      { x: 800, y: 500 },
+      { x: 800, y: 800 },
+      { x: 500, y: 800 },
+      { x: 500, y: 1000 }
+    ],
+    decorations: [
+      { type: 'star', x: 100, y: 100, size: 10 },
+      { type: 'star', x: 900, y: 150, size: 12 },
+      { type: 'star', x: 300, y: 850, size: 8 },
+      { type: 'star', x: 700, y: 820, size: 14 },
+      { type: 'crater', x: 500, y: 500, size: 60 },
+      { type: 'crater', x: 150, y: 650, size: 40 },
+      { type: 'crater', x: 850, y: 350, size: 45 }
+    ]
+  },
+  {
+    id: 'infernal_spiral',
+    name: 'Infernal Spiral',
+    description: 'A molten rock maze winding directly towards the volcanic core. Watch out for rapid fast-moving bloon streams.',
+    theme: 'volcano',
+    trackWidth: 24,
+    bgColor: '#1c1917', // stone-900
+    trackColor: '#7c2d12', // orange-900
+    borderColor: '#ea580c', // orange-600
+    track: [
+      { x: 0, y: 100 },
+      { x: 900, y: 100 },
+      { x: 900, y: 900 },
+      { x: 200, y: 900 },
+      { x: 200, y: 350 },
+      { x: 700, y: 350 },
+      { x: 700, y: 650 },
+      { x: 450, y: 650 },
+      { x: 450, y: 500 },
+      { x: 1000, y: 500 }
+    ],
+    decorations: [
+      { type: 'lava', x: 450, y: 500, size: 45 },
+      { type: 'lava', x: 500, y: 200, size: 55 },
+      { type: 'rock', x: 100, y: 500, size: 35 },
+      { type: 'rock', x: 800, y: 750, size: 40 },
+      { type: 'crater', x: 50, y: 850, size: 30 }
+    ]
   }
 ];
 
