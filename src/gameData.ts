@@ -329,6 +329,274 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
         { id: 'super_b5_legend', name: 'Legend of the Night', cost: 75000, description: 'He who blocks leaks and commands night sweeps.', effects: { damage: 25, pierce: 10, range: 70, cooldownMult: 0.6 } }
       ]
     ]
+  },
+  boomerang: {
+    cost: 325,
+    baseRange: 110,
+    baseCooldown: 60,
+    description: 'Launches spinning boomerangs that fly in wide arcs and can hit multiple targets over and over.',
+    upgrades: [
+      [
+        { id: 'boom_t1_speed', name: 'Fast Throwing', cost: 100, description: 'Throws boomerangs faster.', effects: { cooldownMult: 0.75 } },
+        { id: 'boom_t2_even_fast', name: 'Faster Throwing', cost: 185, description: 'Throws boomerangs much faster.', effects: { cooldownMult: 0.55 } },
+        { id: 'boom_t3_glaive', name: 'Glaive Ricochet', cost: 800, description: 'Boomerangs bounce to nearby bloons automatically.', effects: { pierce: 6, damage: 1 } },
+        { id: 'boom_t4_moab', name: 'MOAB Press', cost: 1800, description: 'Heavy glaives push back MOAB-class bloons.', effects: { range: 20, damage: 4 } },
+        { id: 'boom_t5_lord', name: 'Glaive Lord', cost: 8500, description: 'Orbits three permanent heavy glaives around the tower.', effects: { damage: 10, pierce: 12, range: 40 } }
+      ],
+      [
+        { id: 'boom_m1_long', name: 'Long Range', cost: 75, description: 'Throws further.', effects: { range: 20 } },
+        { id: 'boom_m2_red_hot', name: 'Red Hot Rangs', cost: 150, description: 'Ignites boomerangs, letting them pop frozen bloons.', effects: { damage: 1 } },
+        { id: 'boom_m3_bionic', name: 'Bionic Boomerang', cost: 750, description: 'Throws boomerangs at cybernetic speeds.', effects: { cooldownMult: 0.4 } },
+        { id: 'boom_m4_charge', name: 'Turbo Charge', cost: 2400, description: 'Extreme firing speed upgrade.', effects: { cooldownMult: 0.2, damage: 1 } },
+        { id: 'boom_m5_permacharge', name: 'Perma-Charge', cost: 9000, description: 'Unleashes a constant storm of supercharged boomerangs.', effects: { cooldownMult: 0.1, damage: 3, pierce: 3 } }
+      ],
+      [
+        { id: 'boom_b1_kylie', name: 'Kylie Boomerang', cost: 350, description: 'Boomerang travels in straight line, hitting things going and returning.', effects: { pierce: 3 } },
+        { id: 'boom_b2_sharp', name: 'Super Sharp Rangs', cost: 220, description: 'Slices through groups with increased pierce.', effects: { pierce: 4 } },
+        { id: 'boom_b3_moab_shred', name: 'MOAB Shredder', cost: 1200, description: 'Extra damage against large blimps.', effects: { damage: 6 } },
+        { id: 'boom_b4_titan', name: 'Titan Kylie', cost: 3000, description: 'GIANT boomerangs slice anything in their path.', effects: { damage: 12, pierce: 8 } },
+        { id: 'boom_b5_dom', name: 'MOAB Domination', cost: 14000, description: 'Utterly dominates MOAB-class bloons with extreme power.', effects: { damage: 35, range: 40, pierce: 10 } }
+      ]
+    ]
+  },
+  ninja: {
+    cost: 500,
+    baseRange: 110,
+    baseCooldown: 40,
+    description: 'Disciplined fighter who throws fast shurikens and inherently detects Camo bloons.',
+    upgrades: [
+      [
+        { id: 'ninja_t1_ninja_disc', name: 'Ninja Discipline', cost: 250, description: 'Increases attack speed and range.', effects: { cooldownMult: 0.8, range: 15 } },
+        { id: 'ninja_t2_sharp', name: 'Sharp Shurikens', cost: 350, description: 'Shurikens can pop more bloons.', effects: { pierce: 2 } },
+        { id: 'ninja_t3_double', name: 'Double Shot', cost: 650, description: 'Throws two shurikens at once.', effects: { pierce: 1 } },
+        { id: 'ninja_t4_jitsu', name: 'Bloonjitsu', cost: 2400, description: 'Throws 5 shurikens at once for ultimate group coverage.', effects: { pierce: 2, range: 10 } },
+        { id: 'ninja_t5_grandmaster', name: 'Grandmaster Ninja', cost: 9500, description: 'An elite ninja throwing incredible quantities of shurikens.', effects: { cooldownMult: 0.3, damage: 1 } }
+      ],
+      [
+        { id: 'ninja_m1_caltrops', name: 'Caltrops', cost: 225, description: 'Throws spikes onto the track periodically.', effects: { range: 10 } },
+        { id: 'ninja_m2_coutereye', name: 'Counter-Espionage', cost: 500, description: 'Strips Camo properties from any bloon hit.', effects: { range: 15, canSeeCamo: true } },
+        { id: 'ninja_m3_shinobi', name: 'Shinobi Tactics', cost: 900, description: 'Spurs attack speed of nearby ninjas.', effects: { cooldownMult: 0.8 } },
+        { id: 'ninja_m4_sabotage', name: 'Bloon Sabotage', cost: 3500, description: 'Weakened states slow emerging bloon speeds.', effects: { cooldownMult: 0.6 } },
+        { id: 'ninja_m5_grand_sabo', name: 'Grand Sabotage', cost: 16000, description: 'Skins health layers off MOABs and slows them heavily.', effects: { cooldownMult: 0.4, damage: 10 } }
+      ],
+      [
+        { id: 'ninja_b1_seek', name: 'Seeking Shurikens', cost: 250, description: 'Shurikens track bloons automatically.', effects: { range: 10 } },
+        { id: 'ninja_b2_distract', name: 'Distraction', cost: 350, description: 'Shurikens have a chance to push bloons backwards.', effects: { range: 15 } },
+        { id: 'ninja_b3_stick', name: 'Sticky Bomb', cost: 400, description: 'Attaches explosive time bombs to MOAB-class bloons.', effects: { damage: 3 } },
+        { id: 'ninja_b4_master_bomber', name: 'Master Bomber', cost: 5000, description: 'Constantly throws heavy flash bombs and sticky bombs.', effects: { damage: 15, pierce: 2 } },
+        { id: 'ninja_b5_shadow', name: 'Shadow Champion', cost: 21000, description: 'Legendary ninja who commands shadow clones.', effects: { damage: 40, range: 40, cooldownMult: 0.4 } }
+      ]
+    ]
+  },
+  glue: {
+    cost: 260,
+    baseRange: 90,
+    baseCooldown: 50,
+    description: 'Shoots globs of sticky, slowing glue. Upgradable to dissolve layers.',
+    upgrades: [
+      [
+        { id: 'glue_t1_soak', name: 'Glue Soak', cost: 150, description: 'Glue soaks through all layers.', effects: { range: 10 } },
+        { id: 'glue_t2_corrosive', name: 'Corrosive Glue', cost: 300, description: 'Glue constantly melts bloon layers over time.', effects: { damage: 1 } },
+        { id: 'glue_t3_dissolve', name: 'Bloon Dissolver', cost: 900, description: 'Melts layers at double frequency.', effects: { damage: 2, range: 10 } },
+        { id: 'glue_t4_liquefier', name: 'Bloon Liquefier', cost: 5000, description: 'Rapidly cooks any bloon group to nothingness.', effects: { damage: 5, cooldownMult: 0.8 } },
+        { id: 'glue_t5_solver', name: 'The Bloon Solver', cost: 18000, description: 'A massive wave of acid melts everything on the track in seconds.', effects: { damage: 22, range: 30, cooldownMult: 0.5 } }
+      ],
+      [
+        { id: 'glue_m1_bigger', name: 'Bigger Globs', cost: 100, description: 'Splashes glue onto nearby bloons.', effects: { range: 15 } },
+        { id: 'glue_m2_splatter', name: 'Glue Splatter', cost: 800, description: 'Vastly increases landing splash area.', effects: { range: 25 } },
+        { id: 'glue_m3_hose', name: 'Glue Hose', cost: 1500, description: 'Fires glue at a continuous rate.', effects: { cooldownMult: 0.45 } },
+        { id: 'glue_m4_strike', name: 'Glue Strike', cost: 2500, description: 'Glue blankets whole active screen.', effects: { cooldownMult: 0.3 } },
+        { id: 'glue_m5_storm', name: 'Glue Storm', cost: 12000, description: 'Unleashes endless sheets of glue rain dealing damage.', effects: { damage: 4, cooldownMult: 0.2 } }
+      ],
+      [
+        { id: 'glue_b1_stickier', name: 'Stickier Glue', cost: 100, description: 'Slows down bloons even more.', effects: { range: 10 } },
+        { id: 'glue_b2_stronger', name: 'Stronger Glue', cost: 150, description: 'Glue lasts 3 times longer.', effects: { range: 15 } },
+        { id: 'glue_b3_moab', name: 'MOAB Glue', cost: 3400, description: 'Allows glue to coat and slow heavy MOAB-class blimps.', effects: { damage: 2 } },
+        { id: 'glue_b4_relent', name: 'Relentless Glue', cost: 4200, description: 'Popped glued bloons drop a pool of glue on the track.', effects: { damage: 4 } },
+        { id: 'glue_b5_super', name: 'Super Glue', cost: 22000, description: 'Incredibly sticky glue completely immobilizes bloons on impact.', effects: { damage: 25, range: 40 } }
+      ]
+    ]
+  },
+  wizard: {
+    cost: 380,
+    baseRange: 115,
+    baseCooldown: 45,
+    description: 'Monkey Wizard who fires mystical heat bolts, flame streams, and magical blasts.',
+    upgrades: [
+      [
+        { id: 'wiz_t1_guided', name: 'Guided Magic', cost: 120, description: 'Magic bolts check paths around obstacles.', effects: { range: 20 } },
+        { id: 'wiz_t2_sense', name: 'Arcane Senses', cost: 220, description: 'Detects Camo bloons with mystical eyes.', effects: { range: 15, canSeeCamo: true } },
+        { id: 'wiz_t3_spike', name: 'Arcane Spike', cost: 1200, description: 'Fires heavy concentrated bolts dealing extreme damage.', effects: { damage: 3, pierce: 2 } },
+        { id: 'wiz_t4_blast', name: 'Arcane Blast', cost: 3500, description: 'Gigantic magic charges crush tough layers.', effects: { damage: 8, range: 15 } },
+        { id: 'wiz_t5_archmage', name: 'Archmage', cost: 24000, description: 'Ultimate wizard casting extreme magical bolts, fireballs, and dragon breath.', effects: { damage: 30, pierce: 5, cooldownMult: 0.4 } }
+      ],
+      [
+        { id: 'wiz_m1_fireball', name: 'Fireball', cost: 250, description: 'Launches small explosive fireballs.', effects: { damage: 1 } },
+        { id: 'wiz_m2_wall', name: 'Wall of Fire', cost: 950, description: 'Summons static flames on target track spots.', effects: { range: 25 } },
+        { id: 'wiz_m3_breath', name: 'Dragons Breath', cost: 3000, description: 'Constantly sprays fire from hands.', effects: { cooldownMult: 0.4, damage: 1 } },
+        { id: 'wiz_m4_summon', name: 'Summon Phoenix', cost: 4500, description: 'An elite firebird assists in combat.', effects: { range: 40, damage: 4 } },
+        { id: 'wiz_m5_wizard_lord', name: 'Wizard Lord Phoenix', cost: 30000, description: 'Turns into a permanent giant Phoenix deity.', effects: { damage: 60, cooldownMult: 0.25 } }
+      ],
+      [
+        { id: 'wiz_b1_intensify', name: 'Intense Magic', cost: 150, description: 'Faster and wider magical projectiles.', effects: { range: 15 } },
+        { id: 'wiz_b2_monkey_sense', name: 'Monkey Sense', cost: 250, description: 'Expands magical combat ranges.', effects: { range: 25 } },
+        { id: 'wiz_b3_necromancer', name: 'Necromancer', cost: 2400, description: 'Reanimates popped bloons.', effects: { damage: 3 } },
+        { id: 'wiz_b4_prince', name: 'Prince of Darkness', cost: 21000, description: 'Commands huge armies of heavy zombie MOABs.', effects: { damage: 32, range: 45 } },
+        { id: 'wiz_b5_soulbind', name: 'Soulbind Coven', cost: 65000, description: 'Exchanges excess lives for absolute black-magic.', effects: { damage: 95, range: 60 } }
+      ]
+    ]
+  },
+  alchemist: {
+    cost: 550,
+    baseRange: 110,
+    baseCooldown: 60,
+    description: 'Throws highly unstable acid potions that dissolve multiple bloons in splashes.',
+    upgrades: [
+      [
+        { id: 'alc_t1_large', name: 'Larger Potions', cost: 200, description: 'Increases splash impact radius.', effects: { range: 15, damage: 1 } },
+        { id: 'alc_t2_acidic', name: 'Acidic Mist', cost: 350, description: 'Coatings deal continuous acidic damage.', effects: { damage: 1 } },
+        { id: 'alc_t3_stimulant', name: 'Berserker Brew', cost: 1250, description: 'Stimulates nearest monkeys.', effects: { range: 20 } },
+        { id: 'alc_t4_stronger', name: 'Stronger Stimulant', cost: 3000, description: 'Amplifies speed boosts and durations.', effects: { range: 30, damage: 2 } },
+        { id: 'alc_t5_brewmaster', name: 'Permanent Brew', cost: 19000, description: 'Nearby monkeys receive permanent mega stat buffs.', effects: { damage: 10, range: 50, cooldownMult: 0.6 } }
+      ],
+      [
+        { id: 'alc_m1_gold', name: 'Lead to Gold', cost: 1000, description: 'Instantly vaporizes lead and awards bonus cash.', effects: { damage: 4 } },
+        { id: 'alc_m2_rubber', name: 'Rubber to Gold', cost: 2800, description: 'Potions turn other bloons to gold.', effects: { range: 20 } },
+        { id: 'alc_m3_mix', name: 'Unstable Mixture', cost: 3500, description: 'Potions cause hit bloons to explode.', effects: { damage: 10 } },
+        { id: 'alc_m4_transform', name: 'Transforming Tonic', cost: 4500, description: 'Turns into a giant laser-eyed monster.', effects: { damage: 20, cooldownMult: 0.4 } },
+        { id: 'alc_m5_total', name: 'Total Transformation', cost: 32000, description: 'Transforms up to 5 nearby monkeys.', effects: { damage: 100, range: 40 } }
+      ],
+      [
+        { id: 'alc_b1_faster', name: 'Faster Throwing', cost: 250, description: 'Throws potions quicker.', effects: { cooldownMult: 0.7 } },
+        { id: 'alc_b2_acid_pool', name: 'Acid Pools', cost: 600, description: 'Misses leave pools of acid on tracks.', effects: { range: 15 } },
+        { id: 'alc_b3_shrink', name: 'Shrink Potion', cost: 3200, description: 'Shrinks spawned ceramic and bloon sizes.', effects: { damage: 12 } },
+        { id: 'alc_b4_concoct', name: 'Concoction', cost: 4200, description: 'Devastating blimp exploders.', effects: { damage: 35 } },
+        { id: 'alc_b5_acid_lord', name: 'Bloon Acid Master', cost: 28000, description: 'Converts clusters of MOABs to simple classes.', effects: { damage: 80, range: 40 } }
+      ]
+    ]
+  },
+  druid: {
+    cost: 400,
+    baseRange: 110,
+    baseCooldown: 50,
+    description: 'Nature guardian who throws sharp wooden thorns in multi-directional fans.',
+    upgrades: [
+      [
+        { id: 'dr_t1_hard', name: 'Hard Thorns', cost: 150, description: 'Thorns slice through more bloons.', effects: { pierce: 2 } },
+        { id: 'dr_t2_heart', name: 'Heart of Thunder', cost: 350, description: 'Fires heavy chain lightning.', effects: { damage: 1, range: 10 } },
+        { id: 'dr_t3_storm', name: 'Druid of the Storm', cost: 1650, description: 'Summons tiny tornados that push bloons backwards.', effects: { range: 25 } },
+        { id: 'dr_t4_tornado', name: 'Ball Lightning', cost: 4500, description: 'Launches electric spheres.', effects: { damage: 6, range: 40 } },
+        { id: 'dr_t5_avatar', name: 'Superstorm', cost: 32000, description: 'Unleashes massive storms capable of blowing MOABs.', effects: { damage: 35, range: 80 } }
+      ],
+      [
+        { id: 'dr_m1_fast', name: 'Faster Throwing', cost: 150, description: 'Throws spikes faster.', effects: { cooldownMult: 0.7 } },
+        { id: 'dr_m2_wild', name: 'Heart of Oak', cost: 305, description: 'Strips regrow properties.', effects: { range: 15 } },
+        { id: 'dr_m3_jungle', name: 'Druid of the Jungle', cost: 950, description: 'Summons woodsy vines.', effects: { damage: 2 } },
+        { id: 'dr_m4_bounty', name: 'Jungles Bounty', cost: 2000, description: 'Generates bonus cash rounds.', effects: { range: 20 } },
+        { id: 'dr_m5_wrath', name: 'Spirit of the Forest', cost: 25000, description: 'Covers entire pathway in sharp thorns.', effects: { damage: 45 } }
+      ],
+      [
+        { id: 'dr_b1_range', name: 'Reach of Nature', cost: 100, description: 'Throws wood thorns further.', effects: { range: 20 } },
+        { id: 'dr_b2_sharp', name: 'Very Sharp Thorns', cost: 250, description: 'Boosts spike densities.', effects: { pierce: 2 } },
+        { id: 'dr_b3_venge', name: 'Druid of Wrath', cost: 600, description: 'Increases attack speed.', effects: { cooldownMult: 0.8 } },
+        { id: 'dr_b4_poplust', name: 'Poplust Coven', cost: 2500, description: 'Buffs all nearby Druids.', effects: { range: 15, damage: 2 } },
+        { id: 'dr_b5_avatar_wrath', name: 'Avatar of Wrath', cost: 30000, description: 'Becomes a red-eyed avatar dealing extreme damage.', effects: { damage: 65, cooldownMult: 0.5 } }
+      ]
+    ]
+  },
+  farm: {
+    cost: 1250,
+    baseRange: 60,
+    baseCooldown: 300,
+    description: 'Banana Farm. Generates solid bonus income cash of +$80 after surviving every wave.',
+    upgrades: [
+      [
+        { id: 'farm_t1_more', name: 'More Bananas', cost: 350, description: 'Increases round payouts.', effects: { range: 5 } },
+        { id: 'farm_t2_greater', name: 'Greater Production', cost: 600, description: 'Vastly increases crop outputs.', effects: { range: 5 } },
+        { id: 'farm_t3_plantation', name: 'Banana Plantation', cost: 1400, description: 'Highly optimized crop yielding major cash.', effects: { range: 10 } },
+        { id: 'farm_t4_facility', name: 'Banana Research Facility', cost: 5500, description: 'Professional research center award.', effects: { range: 15 } },
+        { id: 'farm_t5_central', name: 'Banana Central', cost: 28000, description: 'Ultimate conglomerate delivering immense riches.', effects: { range: 40 } }
+      ],
+      [
+        { id: 'farm_m1_long', name: 'Long Life Bananas', cost: 200, description: 'Slight range increase.', effects: { range: 10 } },
+        { id: 'farm_m2_val', name: 'Valuable Bananas', cost: 350, description: 'Boosts final sell values.', effects: { range: 10 } },
+        { id: 'farm_m3_bank', name: 'Monkey Bank', cost: 2200, description: 'Auto stores interest earnings.', effects: { range: 15 } },
+        { id: 'farm_m4_imf', name: 'IMF Loan Office', cost: 6500, description: 'Receive $2000 cash loans.', effects: { range: 25 } },
+        { id: 'farm_m5_nomad', name: 'Nomadic Vault', cost: 42000, description: 'Epic hyper-vault compounding massive revenues.', effects: { range: 50 } }
+      ],
+      [
+        { id: 'farm_b1_salvage', name: 'EZ Collect Salvage', cost: 150, description: 'Auto collects crops.', effects: { range: 10 } },
+        { id: 'farm_b2_market', name: 'Monkey Marketplace', cost: 400, description: 'Automates direct trade exports.', effects: { range: 15 } },
+        { id: 'farm_b3_central_mark', name: 'Central Market', cost: 2105, description: 'Major global distribution exporter.', effects: { range: 20 } },
+        { id: 'farm_b4_wall_st', name: 'Monkey Wall Street', cost: 9500, description: 'Generates huge sums of passive capital.', effects: { range: 30 } },
+        { id: 'farm_b5_empire', name: 'Banana Empire Trade', cost: 35000, description: 'Unprecedented financial dominion.', effects: { range: 60 } }
+      ]
+    ]
+  },
+  sub: {
+    cost: 325,
+    baseRange: 135,
+    baseCooldown: 40,
+    description: 'Aquatic submarine. CAN ONLY BE placed on Natural Water or Water Pools. Fires tracking homing torpedoes.',
+    upgrades: [
+      [
+        { id: 'sub_t1_long', name: 'Long Range Sub', cost: 130, description: 'Vastly expanded sonar tracking range.', effects: { range: 35 } },
+        { id: 'sub_t2_intel', name: 'Advanced Intel', cost: 350, description: 'Permits tracking bloons anywhere.', effects: { range: 75, canSeeCamo: true } },
+        { id: 'sub_t3_submerge', name: 'Submerge Sonar', cost: 800, description: 'Strips camo status from bloons.', effects: { range: 30 } },
+        { id: 'sub_t4_reactor', name: 'Nuclear Reactor', cost: 3800, description: 'Emits a radioactive field.', effects: { damage: 4, range: 45 } },
+        { id: 'sub_t5_ener', name: 'Energizer Sub', cost: 18050, description: 'Generates extra levels of XP.', effects: { damage: 25, range: 70 } }
+      ],
+      [
+        { id: 'sub_m1_barb', name: 'Barbed Darts', cost: 100, description: 'Torpedoes gain extra pierce.', effects: { pierce: 2 } },
+        { id: 'sub_m2_heat', name: 'Heat-Tipped Darts', cost: 185, description: 'Torpedoes can pop lead and frozen classes.', effects: { damage: 1 } },
+        { id: 'sub_m3_missile', name: 'Ballistic Missile', cost: 1250, description: 'Launches missile artillery blasts.', effects: { damage: 5, range: 40 } },
+        { id: 'sub_m4_first', name: 'First Strike Capability', cost: 8500, description: 'Artillery missiles target heaviest.', effects: { damage: 20, range: 50 } },
+        { id: 'sub_m5_preemptive', name: 'Pre-Emptive Strike', cost: 22000, description: 'Automatic missiles at emerging entries.', effects: { damage: 45, cooldownMult: 0.6 } }
+      ],
+      [
+        { id: 'sub_b1_twin', name: 'Twin Guns', cost: 200, description: 'Fires two torpedo darts simultaneously.', effects: { cooldownMult: 0.6 } },
+        { id: 'sub_b2_airburst', name: 'Airburst Darts', cost: 500, description: 'Torpedoes detonate into airburst.', effects: { pierce: 3 } },
+        { id: 'sub_b3_triple', name: 'Triple Guns', cost: 1205, description: 'Three tracking darts fired.', effects: { cooldownMult: 0.4 } },
+        { id: 'sub_b4_armor', name: 'Armor Piercing Darts', cost: 2500, description: 'Darts melt MOAB frames easily.', effects: { damage: 8, range: 15 } },
+        { id: 'sub_b5_commander', name: 'Sub Commander', cost: 12000, description: 'Absolute ruler of deep-sea warfare.', effects: { damage: 28, range: 45, cooldownMult: 0.5 } }
+      ]
+    ]
+  },
+  buccaneer: {
+    cost: 500,
+    baseRange: 120,
+    baseCooldown: 50,
+    description: 'Aquatic pirate warship. CAN ONLY BE placed on Natural Water or Water Pools. Shoots grapes and side cannons.',
+    upgrades: [
+      [
+        { id: 'buc_t1_faster', name: 'Faster Shooting', cost: 150, description: 'Cannons fire quicker.', effects: { cooldownMult: 0.7 } },
+        { id: 'buc_t2_double', name: 'Double Shot', cost: 250, description: 'Fires two cannons.', effects: { cooldownMult: 0.5 } },
+        { id: 'buc_t3_destroy', name: 'Destroyer Vessel', cost: 2950, description: 'Rapid fire barrage.', effects: { cooldownMult: 0.25 } },
+        { id: 'buc_t4_aircraft', name: 'Aircraft Carrier', cost: 6200, description: 'Patrolling mini fighter planes.', effects: { range: 40, damage: 6 } },
+        { id: 'buc_t5_flagship', name: 'Carrier Flagship', cost: 18000, description: 'Ultimate combat flagship fleet.', effects: { damage: 32, range: 60, cooldownMult: 0.5 } }
+      ],
+      [
+        { id: 'buc_m1_long', name: 'Long Range Cannons', cost: 120, description: 'Expands nautical range.', effects: { range: 25 } },
+        { id: 'buc_m2_crow', name: 'Crows Nest', cost: 250, description: 'Grants camo-bloon detection cap.', effects: { range: 15, canSeeCamo: true } },
+        { id: 'buc_m3_grape', name: 'Grape Shot', cost: 500, description: 'Cannons burst grape clusters.', effects: { pierce: 2 } },
+        { id: 'buc_m4_cannon', name: 'Cannon Ship', cost: 1200, description: 'Adds heavy explosive cannon side arms.', effects: { damage: 5 } },
+        { id: 'buc_m5_plunder', name: 'Pirate Lord', cost: 14000, description: 'Launches steel grappling chains dragging MOABs.', effects: { damage: 35, range: 40 } }
+      ],
+      [
+        { id: 'buc_b1_heavy', name: 'Heavy Darts', cost: 100, description: 'Increases cannonball pierces.', effects: { pierce: 1 } },
+        { id: 'buc_b2_sharp', name: 'Very Sharp Darts', cost: 180, description: 'Further boosts pierce metrics.', effects: { pierce: 2 } },
+        { id: 'buc_b3_merchant', name: 'Merchantman', cost: 1800, description: 'Generates trade cash after every wave.', effects: { range: 10 } },
+        { id: 'buc_b4_fleet', name: 'Favored Trades Fleet', cost: 4200, description: 'Expands wave payouts.', effects: { range: 20 } },
+        { id: 'buc_b5_empire_trade', name: 'Trade Empire', cost: 16000, description: 'Legendary naval trade empire.', effects: { damage: 20, range: 45 } }
+      ]
+    ]
+  },
+  pool: {
+    cost: 150,
+    baseRange: 55,
+    baseCooldown: 99999,
+    description: 'Portable Water Pool. Creates a custom water surface on land allowing water monkeys to be placed anywhere.',
+    upgrades: [[], [], []]
   }
 };
 
@@ -465,93 +733,152 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
 ];
 
 // Returns an array of bloon types representing the sequence of bloons to spawn for a given round
-export function generateWave(round: number): { delay: number; type: BloonType }[] {
-  const wave: { delay: number; type: BloonType }[] = [];
+export function generateWave(round: number): { delay: number; type: BloonType; isCamo?: boolean; isRegrow?: boolean; isFortified?: boolean }[] {
+  const wave: { delay: number; type: BloonType; isCamo?: boolean; isRegrow?: boolean; isFortified?: boolean }[] = [];
 
   // Pacing logic mimics Bloons TD 6 incremental build-up
   if (round === 1) {
     // Round 1: Just slow Red bloons
-    for (let i = 0; i < 15; i++) {
-      wave.push({ delay: 40 + Math.random() * 30, type: 'Red' });
+    for (let i = 0; i < 20; i++) {
+      wave.push({ delay: 35, type: 'Red' });
     }
   } else if (round === 2) {
-    for (let i = 0; i < 25; i++) {
-      wave.push({ delay: 35 + Math.random() * 25, type: 'Red' });
+    for (let i = 0; i < 35; i++) {
+      wave.push({ delay: 28, type: 'Red' });
     }
   } else if (round < 5) {
     // Round 3-4: Mix block of Reds and Blues
     const redCount = 20 + round * 5;
-    const blueCount = 5 + round * 2;
-    for (let i = 0; i < redCount; i++) wave.push({ delay: 30, type: 'Red' });
-    for (let i = 0; i < blueCount; i++) wave.push({ delay: 40, type: 'Blue' });
+    const blueCount = 8 + round * 2;
+    for (let i = 0; i < redCount; i++) wave.push({ delay: 25, type: 'Red' });
+    for (let i = 0; i < blueCount; i++) wave.push({ delay: 35, type: 'Blue' });
   } else if (round < 10) {
     // Round 5-9: Introduced Green bloons
     const greenCount = round * 3;
     const blueCount = 15;
     const redCount = 20;
-    for (let i = 0; i < redCount; i++) wave.push({ delay: 25, type: 'Red' });
-    for (let i = 0; i < blueCount; i++) wave.push({ delay: 30, type: 'Blue' });
-    for (let i = 0; i < greenCount; i++) wave.push({ delay: 45, type: 'Green' });
+    for (let i = 0; i < redCount; i++) wave.push({ delay: 22, type: 'Red' });
+    for (let i = 0; i < blueCount; i++) wave.push({ delay: 25, type: 'Blue' });
+    for (let i = 0; i < greenCount; i++) wave.push({ delay: 30, type: 'Green' });
   } else if (round === 10) {
-    // Target Boss Wave (Early test)
-    for (let i = 0; i < 15; i++) wave.push({ delay: 20, type: 'Blue' });
-    for (let i = 0; i < 15; i++) wave.push({ delay: 20, type: 'Green' });
-    wave.push({ delay: 100, type: 'Yellow' }); // First glimpse of high speed
+    // Green and Blue clumps plus early Yellows
+    for (let i = 0; i < 15; i++) wave.push({ delay: 18, type: 'Blue' });
+    for (let i = 0; i < 15; i++) wave.push({ delay: 18, type: 'Green' });
+    for (let i = 0; i < 3; i++) wave.push({ delay: 40, type: 'Yellow' }); // First high speed
+  } else if (round < 15) {
+    // Introduce Yellows and Pink rushes, and early Blacks/Whites
+    const yellowCount = (round - 10) * 5;
+    const greenCount = 12;
+    for (let i = 0; i < greenCount; i++) wave.push({ delay: 20, type: 'Green' });
+    for (let i = 0; i < yellowCount; i++) wave.push({ delay: 18, type: 'Yellow' });
+    for (let i = 0; i < 4; i++) wave.push({ delay: 25, type: 'Pink' });
+    if (round >= 13) {
+      for (let i = 0; i < 5; i++) wave.push({ delay: 20, type: 'Black' });
+      for (let i = 0; i < 5; i++) wave.push({ delay: 20, type: 'White' });
+    }
+  } else if (round === 15) {
+    // IMMUNITY TUTORIAL: Introduce Leads (sharp-immune) & Purples (magic-immune)
+    for (let i = 0; i < 10; i++) wave.push({ delay: 35, type: 'Lead' }); // Leads!
+    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Purple' }); // Purples!
+    for (let i = 0; i < 10; i++) wave.push({ delay: 20, type: 'Yellow' });
   } else if (round < 20) {
-    // Introduce Yellows
-    const yellowCount = (round - 10) * 4;
-    const greenCount = 15;
-    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Blue' });
-    for (let i = 0; i < greenCount; i++) wave.push({ delay: 25, type: 'Green' });
-    for (let i = 0; i < yellowCount; i++) wave.push({ delay: 35, type: 'Yellow' });
+    // Lead + Purple rushes alongside standard blacks and whites
+    for (let i = 0; i < 8; i++) wave.push({ delay: 30, type: 'Lead' });
+    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Purple' });
+    for (let i = 0; i < 15; i++) wave.push({ delay: 12, type: 'Pink' });
   } else if (round === 20) {
-    // Rush wave!
-    for (let i = 0; i < 30; i++) wave.push({ delay: 10, type: 'Green' });
-    for (let i = 0; i < 20; i++) wave.push({ delay: 15, type: 'Yellow' });
-    wave.push({ delay: 80, type: 'Pink' }); // Fast Pink
+    // INTRODUCING ZEBRAS (combined freeze + explosion immunities)
+    for (let i = 0; i < 15; i++) wave.push({ delay: 15, type: 'Zebra' });
+    for (let i = 0; i < 5; i++) wave.push({ delay: 25, type: 'Lead' });
+    for (let i = 0; i < 15; i++) wave.push({ delay: 8, type: 'Pink' });
+  } else if (round < 25) {
+    // Introduces Camo (Crested) and Regrow properties!
+    const multiplier = round - 20;
+    // Camo Greens and Yellows
+    for (let i = 0; i < 8 * multiplier; i++) {
+      wave.push({ delay: 20, type: 'Green', isCamo: true });
+    }
+    // Regrow Reds and Blues
+    for (let i = 0; i < 12 * multiplier; i++) {
+      wave.push({ delay: 15, type: 'Blue', isRegrow: true });
+    }
+    // Mix in Zebras and Rainbows
+    for (let i = 0; i < 4 * multiplier; i++) {
+      wave.push({ delay: 25, type: 'Rainbow' });
+    }
+  } else if (round === 25) {
+    // First high-hp Ceremic bloon!
+    for (let i = 0; i < 20; i++) wave.push({ delay: 10, type: 'Pink' });
+    wave.push({ delay: 100, type: 'Ceramic' }); // Heavy shell!
+    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Rainbow' });
   } else if (round < 30) {
-    // Introduce Pink & Ceramic
-    const pinkCount = (round - 20) * 5;
-    const yellowCount = 15;
-    for (let i = 0; i < yellowCount; i++) wave.push({ delay: 20, type: 'Yellow' });
-    for (let i = 0; i < pinkCount; i++) wave.push({ delay: 15, type: 'Pink' });
-    if (round >= 25) {
-      wave.push({ delay: 120, type: 'Ceramic' }); // First heavy Ceramic target
+    // Rainbows, Zebras, and Fortified modifiers!
+    const multiplier = round - 25;
+    for (let i = 0; i < 10; i++) {
+      wave.push({ delay: 20, type: 'Lead', isFortified: true }); // Steel-plated leads!
+    }
+    for (let i = 0; i < 8 * multiplier; i++) {
+      wave.push({ delay: 15, type: 'Rainbow', isRegrow: true });
+    }
+    for (let i = 0; i < 5 * multiplier; i++) {
+      wave.push({ delay: 25, type: 'Ceramic' });
     }
   } else if (round === 30) {
-    // Hard Wave! Clusters of fast Pinks + Ceramic leading
-    wave.push({ delay: 40, type: 'Ceramic' });
-    for (let i = 0; i < 30; i++) wave.push({ delay: 8, type: 'Pink' });
-    wave.push({ delay: 50, type: 'Ceramic' });
+    // Rainbow Regrow Rush + Fortified Ceramics
+    for (let i = 0; i < 20; i++) wave.push({ delay: 8, type: 'Rainbow', isRegrow: true });
+    for (let i = 0; i < 3; i++) wave.push({ delay: 50, type: 'Ceramic', isFortified: true });
+    for (let i = 0; i < 12; i++) wave.push({ delay: 10, type: 'Pink', isCamo: true });
   } else if (round < 40) {
-    // Intense preparation for MOAB
+    // Camo, Regrow, Fortified Ceramics and Rainbow clumps
     const ceramicCount = (round - 30) * 2;
-    const pinkCount = 20;
-    for (let i = 0; i < ceramicCount; i++) wave.push({ delay: 60, type: 'Ceramic' });
-    for (let i = 0; i < pinkCount; i++) wave.push({ delay: 10, type: 'Pink' });
-    for (let i = 0; i < 25; i++) wave.push({ delay: 12, type: 'Yellow' });
+    for (let i = 0; i < ceramicCount; i++) {
+      wave.push({ delay: 40, type: 'Ceramic', isFortified: i % 2 === 0 });
+    }
+    for (let i = 0; i < 15; i++) {
+      wave.push({ delay: 12, type: 'Rainbow', isCamo: true });
+    }
+    for (let i = 0; i < 12; i++) {
+      wave.push({ delay: 15, type: 'Zebra', isRegrow: true });
+    }
   } else if (round === 40) {
-    // The Famed MOAB Mother Of All Bloons Wave!
-    for (let i = 0; i < 10; i++) wave.push({ delay: 20, type: 'Pink' });
-    for (let i = 0; i < 4; i++) wave.push({ delay: 50, type: 'Ceramic' });
-    wave.push({ delay: 200, type: 'MOAB' }); // Boss blimp!
+    // MOAB Wave (Mother of All Bloons BOSS)
+    for (let i = 0; i < 15; i++) wave.push({ delay: 15, type: 'Pink', isCamo: true });
+    for (let i = 0; i < 6; i++) wave.push({ delay: 40, type: 'Ceramic', isRegrow: true });
+    wave.push({ delay: 180, type: 'MOAB' }); // Boss blimp!
   } else {
     // Post-round 40 madness (Infinite play Scaling)
-    const multiplier = round - 40;
-    wave.push({ delay: 100, type: 'MOAB' });
-    if (multiplier % 5 === 0) {
-      wave.push({ delay: 150, type: 'MOAB' });
+    // Introduces BFB (42), DDT (45), ZOMG (50), and BAD (55)
+    const extra = round - 40;
+    
+    if (round === 42 || round === 43) {
+      wave.push({ delay: 120, type: 'BFB' });
+    } else if (round >= 45 && round < 50) {
+      // Sleek stealth DDT Blimps!
+      wave.push({ delay: 100, type: 'DDT' });
+      wave.push({ delay: 80, type: 'DDT' });
+    } else if (round === 50) {
+      // The colossal green ZOMG!
+      wave.push({ delay: 150, type: 'ZOMG' });
+    } else if (round === 55 || round % 10 === 5) {
+      // The massive Purple BAD Boss!
+      wave.push({ delay: 240, type: 'BAD' });
+    } else {
+      // Random boss scaling!
+      if (extra % 3 === 0) wave.push({ delay: 120, type: 'BFB' });
+      if (extra % 5 === 0) wave.push({ delay: 150, type: 'DDT' });
+      if (extra % 8 === 0) wave.push({ delay: 180, type: 'ZOMG' });
+      wave.push({ delay: 90, type: 'MOAB' });
     }
-    const ceramicCount = Math.min(20, 4 + multiplier * 2);
+
+    const ceramicCount = Math.min(25, 5 + extra);
     for (let i = 0; i < ceramicCount; i++) {
-      wave.push({ delay: 40, type: 'Ceramic' });
+      wave.push({ delay: 35, type: 'Ceramic', isFortified: i % 3 === 0 });
     }
-    for (let i = 0; i < 30; i++) {
-      wave.push({ delay: 10, type: 'Pink' });
+    for (let i = 0; i < 20; i++) {
+      wave.push({ delay: 12, type: 'Rainbow', isRegrow: true });
     }
   }
 
-  // Shuffle delays slightly to make columns less mechanical
   return wave;
 }
 
@@ -566,27 +893,57 @@ export function getBloonStyle(type: BloonType): {
 } {
   switch (type) {
     case 'Red':
-      return { speed: 1.1, hp: 1, size: 10, color: '#ffffff', reward: 1, label: 'Red' };
+      return { speed: 1.1, hp: 1, size: 9, color: '#ef4444', reward: 1, label: 'Red' };
     case 'Blue':
-      return { speed: 1.4, hp: 1, size: 11, color: '#3b82f6', reward: 1, label: 'Blue' };
+      return { speed: 1.4, hp: 1, size: 10, color: '#3b82f6', reward: 1, label: 'Blue' };
     case 'Green':
-      return { speed: 1.8, hp: 1, size: 12, color: '#10b981', reward: 1, label: 'Green' };
+      return { speed: 1.8, hp: 1, size: 11, color: '#10b981', reward: 1, label: 'Green' };
     case 'Yellow':
-      return { speed: 2.8, hp: 1, size: 13, color: '#facc15', reward: 1, label: 'Yellow' };
+      return { speed: 3.2, hp: 1, size: 11, color: '#facc15', reward: 1, label: 'Yellow' };
     case 'Pink':
-      return { speed: 3.5, hp: 1, size: 13, color: '#ec4899', reward: 1, label: 'Pink' };
+      return { speed: 4.0, hp: 1, size: 11, color: '#ec4899', reward: 1, label: 'Pink' };
+    case 'Black':
+      return { speed: 1.8, hp: 1, size: 10, color: '#1e293b', reward: 2, label: 'Black' };
+    case 'White':
+      return { speed: 2.0, hp: 1, size: 10, color: '#f8fafc', reward: 2, label: 'White' };
+    case 'Purple':
+      return { speed: 3.0, hp: 1, size: 10, color: '#a855f7', reward: 2, label: 'Purple' };
+    case 'Lead':
+      return { speed: 1.0, hp: 1, size: 11, color: '#64748b', reward: 2, label: 'Lead' };
+    case 'Zebra':
+      return { speed: 1.8, hp: 1, size: 11, color: '#f1f5f9', reward: 2, label: 'Zebra' };
+    case 'Rainbow':
+      return { speed: 2.2, hp: 1, size: 12, color: '#fb7185', reward: 3, label: 'Rainbow' };
     case 'Ceramic':
-      return { speed: 2.2, hp: 10, size: 15, color: '#a1a1aa', reward: 2, label: 'Ceramic' };
+      return { speed: 2.5, hp: 10, size: 13, color: '#b45309', reward: 4, label: 'Ceramic' };
     case 'MOAB':
-      return { speed: 0.7, hp: 200, size: 30, color: '#06b6d4', reward: 15, label: 'MOAB' };
+      return { speed: 0.75, hp: 200, size: 26, color: '#06b6d4', reward: 15, label: 'MOAB' };
+    case 'BFB':
+      return { speed: 0.65, hp: 400, size: 30, color: '#ef4444', reward: 25, label: 'BFB' };
+    case 'ZOMG':
+      return { speed: 0.5, hp: 800, size: 34, color: '#16a34a', reward: 55, label: 'ZOMG' };
+    case 'DDT':
+      return { speed: 3.2, hp: 150, size: 26, color: '#334155', reward: 35, label: 'DDT' };
+    case 'BAD':
+      return { speed: 0.4, hp: 1500, size: 38, color: '#d946ef', reward: 100, label: 'BAD' };
   }
 }
 
 // Child Bloon Spawn definition
 export function getChildBloonType(type: BloonType): BloonType | null {
   switch (type) {
-    case 'MOAB': return 'Ceramic'; // Spawns ceramics
-    case 'Ceramic': return 'Pink';
+    case 'BAD': return 'ZOMG'; // Spawns 2 ZOMG & 3 DDTs (handled in splitting loops)
+    case 'ZOMG': return 'BFB';
+    case 'BFB': return 'MOAB';
+    case 'MOAB': return 'Ceramic';
+    case 'DDT': return 'Ceramic'; // Spawns 4 ceramics
+    case 'Ceramic': return 'Rainbow';
+    case 'Rainbow': return 'Zebra';
+    case 'Zebra': return 'White'; // Zebra splits into Black and White (handled in splitting loops)
+    case 'Lead': return 'Black';
+    case 'Purple': return 'Pink';
+    case 'White': return 'Pink';
+    case 'Black': return 'Pink';
     case 'Pink': return 'Yellow';
     case 'Yellow': return 'Green';
     case 'Green': return 'Blue';
@@ -598,8 +955,22 @@ export function getChildBloonType(type: BloonType): BloonType | null {
 // Get the quantity of child bloons when popped
 export function getChildCount(type: BloonType): number {
   switch (type) {
-    case 'MOAB': return 4; // BTD6 typical MOAB releases massive children
+    case 'BAD': return 5;
+    case 'ZOMG': return 4;
+    case 'BFB': return 4;
+    case 'MOAB': return 4;
+    case 'DDT': return 4;
     case 'Ceramic': return 2;
-    default: return 1;
+    case 'Rainbow': return 2;
+    case 'Zebra': return 2;
+    case 'Lead': return 2;
+    case 'Purple': return 2;
+    case 'White': return 2;
+    case 'Black': return 2;
+    case 'Pink': return 1;
+    case 'Yellow': return 1;
+    case 'Green': return 1;
+    case 'Blue': return 1;
+    case 'Red': return 0;
   }
 }

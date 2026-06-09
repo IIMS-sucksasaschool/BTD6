@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GameMap, Tower, Bloon, Projectile, Part, FloatingText, Difficulty, TowerType, TargetMode } from '../types';
+import { GameMap, Tower, Bloon, BloonType, Projectile, Part, FloatingText, Difficulty, TowerType, TargetMode, ThemeColors } from '../types';
+import { PRESETS } from './SettingsScreen';
 import { MAPS, TOWER_STATS, HEROES, getBloonStyle, getChildBloonType, getChildCount, generateWave } from '../gameData';
 import {
   drawMap,
@@ -41,7 +42,30 @@ import {
   DollarSign,
   Flame,
   Trophy,
+  Palette,
+  Save,
+  Copy,
+  Check,
 } from 'lucide-react';
+
+export const TOWER_VISUALS: Record<string, { emoji: string; color: string; tag: string }> = {
+  dart: { emoji: '🐒', color: '#b45309', tag: 'Primary Popper' },
+  tack: { emoji: '⚙️', color: '#6b7280', tag: '360° Burst' },
+  sniper: { emoji: '🎯', color: '#15803d', tag: 'Infinite Range' },
+  bomb: { emoji: '💣', color: '#1f2937', tag: 'Heavy Exploder' },
+  ice: { emoji: '🥶', color: '#0ea5e9', tag: 'Cryo Freeze' },
+  super: { emoji: '🦸', color: '#4f46e5', tag: 'Magic Legend' },
+  boomerang: { emoji: '🪃', color: '#c2410c', tag: 'Curve Pierce' },
+  ninja: { emoji: '🥷', color: '#374151', tag: 'Stealth Pierce' },
+  glue: { emoji: '🧪', color: '#a3e635', tag: 'Acid/Glue Slow' },
+  wizard: { emoji: '🧙', color: '#7c3aed', tag: 'Flame/Spells' },
+  alchemist: { emoji: '🧪', color: '#db2777', tag: 'Buff Brews' },
+  druid: { emoji: '🌳', color: '#16a34a', tag: 'Nature Wrath' },
+  farm: { emoji: '🍌', color: '#eab308', tag: 'Economy Crop' },
+  sub: { emoji: '⚓', color: '#0284c7', tag: 'Aquatic Sonar' },
+  buccaneer: { emoji: '⛵', color: '#0369a1', tag: 'Pirate Grapes' },
+  pool: { emoji: '🏊', color: '#0d9488', tag: 'Water Surface' },
+};
 
 interface GameScreenProps {
   mapId: string;
@@ -54,6 +78,8 @@ interface GameScreenProps {
   heroXpRateBonus: number;
   onGameOver: (roundsCompleted: number, monkeyMoneyEarned: number, totalPopped: number) => void;
   onNavigateHome: () => void;
+  themeColors?: ThemeColors;
+  onChangeTheme?: (colors: ThemeColors) => void;
 }
 
 // Math Utility: Calculate shortest distance from point (px, py) to line segment (ax, ay) -> (bx, by)
@@ -81,6 +107,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   heroXpRateBonus,
   onGameOver,
   onNavigateHome,
+  themeColors,
+  onChangeTheme,
 }) => {
   const selectedMap = MAPS.find((m) => m.id === mapId) || MAPS[0];
   const heroConfig = HEROES.find((h) => h.id === heroType) || HEROES[0];
@@ -141,6 +169,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [selectedPlacedTowerId, setSelectedPlacedTowerId] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: -1000, y: -1000 });
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
+  const [showGameSettingsModal, setShowGameSettingsModal] = useState<boolean>(false);
+  const [copyFeedback, setCopyFeedback] = useState<boolean>(false);
+  const [exportedCodeString, setExportedCodeString] = useState<string>('');
+  const [pastedCode, setPastedCode] = useState<string>('');
+  const [importStatus, setImportStatus] = useState<{ success?: boolean; error?: string } | null>(null);
 
   // Live mutable entities refs (to prevent reactivation re-renders and jitter in high-frequency anims)
   const towersRef = useRef<Tower[]>([]);
@@ -212,30 +245,128 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
       const trackDist = getDistanceToSegment(x, y, ax, ay, bx, by);
       // Track width margin check is track width + padding clearance
-      if (trackDist < selectedMap.trackWidth + 18) {
+      const padding = (selectedShopTower === 'sub' || selectedShopTower === 'buccaneer') ? 12 : 18;
+      if (trackDist < selectedMap.trackWidth + padding) {
         return false;
       }
     }
 
-    // 3. Overlap with existing towers
-    for (const t of towersRef.current) {
-      const dist = Math.hypot(t.x - x, t.y - y);
-      if (dist < 35) {
-        return false;
-      }
-    }
+    // 3. Water Monkey Placement restrictions
+    if (selectedShopTower === 'sub' || selectedShopTower === 'buccaneer') {
+      // Must be placed INSIDE a water area (water decoration or water pool tower)
+      let insideWater = false;
 
-    // 4. Decoration blockages
-    for (const dec of selectedMap.decorations) {
-      if (dec.type === 'lava' || dec.type === 'water') {
-        const dist = Math.hypot(dec.x - x, dec.y - y);
-        if (dist < dec.size + 15) {
+      // Check natural water decorations
+      for (const dec of selectedMap.decorations) {
+        if (dec.type === 'water') {
+          const dist = Math.hypot(dec.x - x, dec.y - y);
+          if (dist < dec.size - 5) {
+            insideWater = true;
+            break;
+          }
+        }
+      }
+
+      // Check placed water pools
+      if (!insideWater) {
+        for (const t of towersRef.current) {
+          if (t.type === 'pool') {
+            const dist = Math.hypot(t.x - x, t.y - y);
+            if (dist < 42) {
+              insideWater = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!insideWater) {
+        return false; // Water monkeys can only go in water!
+      }
+
+      // Overlap checks for water monkey: must not collide with other monkeys (excluding the pool itself)
+      for (const t of towersRef.current) {
+        if (t.type === 'pool') continue; // of course it overlaps with its pool
+        const dist = Math.hypot(t.x - x, t.y - y);
+        if (dist < 26) {
           return false;
+        }
+      }
+    } else {
+      // Land tower or pool itself placement rules
+      // 1. Overlap with existing towers
+      for (const t of towersRef.current) {
+        const dist = Math.hypot(t.x - x, t.y - y);
+        // If placing a pool, don't overlap too close to other towers
+        const minOverlap = selectedShopTower === 'pool' ? 45 : 35;
+        if (dist < minOverlap) {
+          return false;
+        }
+      }
+
+      // 2. Decoration blockages
+      for (const dec of selectedMap.decorations) {
+        if (dec.type === 'lava' || dec.type === 'water') {
+          const dist = Math.hypot(dec.x - x, dec.y - y);
+          if (dist < dec.size + 15) {
+            return false;
+          }
+        }
+      }
+
+      // 3. For land towers, cannot be placed on top of placed pools
+      if (selectedShopTower !== 'pool') {
+        for (const t of towersRef.current) {
+          if (t.type === 'pool') {
+            const dist = Math.hypot(t.x - x, t.y - y);
+            if (dist < 45) {
+              return false;
+            }
+          }
         }
       }
     }
 
     return true;
+  };
+
+  const restartMatch = () => {
+    setRound(1);
+    setRoundInProgress(false);
+    setAutoPlay(false);
+    setTotalPopCount(0);
+    setIsGameOverOrFinished(false);
+    setShowVictoryModal(false);
+    setFreePlayActive(false);
+
+    let baseCash = 650;
+    if (difficulty === 'Easy') baseCash = 850;
+    if (difficulty === 'Medium') baseCash = 650;
+    if (difficulty === 'Hard') baseCash = 650;
+    if (difficulty === 'CHIMPS') baseCash = 650;
+    const actualStartingCashBonus = difficulty === 'CHIMPS' ? 0 : startingCashBonus;
+    setCash(baseCash + actualStartingCashBonus);
+
+    let baseLives = 150;
+    if (difficulty === 'Easy') baseLives = 200;
+    if (difficulty === 'Medium') baseLives = 150;
+    if (difficulty === 'Hard') baseLives = 100;
+    if (difficulty === 'CHIMPS') baseLives = 1;
+    const actualExtraLivesBonus = difficulty === 'CHIMPS' ? 0 : extraLivesBonus;
+    setLives(baseLives + actualExtraLivesBonus);
+
+    towersRef.current = [];
+    bloonsRef.current = [];
+    projectilesRef.current = [];
+    particlesRef.current = [];
+    floatingTextsRef.current = [];
+    spawnQueueRef.current = [];
+    spawnTimerRef.current = 0;
+
+    setSelectedShopTower(null);
+    setSelectedPlacedTowerId(null);
+    setTriggerPopCountUpdate((prev) => prev + 1);
+    setShowGameSettingsModal(false);
   };
 
   // Trigger Spawning round mechanism
@@ -471,14 +602,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 if (difficulty === 'Easy') speedMultiplierByDiff = 0.85;
                 else if (difficulty === 'Hard' || difficulty === 'CHIMPS') speedMultiplierByDiff = 1.15;
 
+                // Fortified double-hp modifier
+                const initialHp = item.isFortified ? (item.type === 'Lead' ? spec.hp * 4 : spec.hp * 2) : spec.hp;
+
                 const inst: Bloon = {
                   id: `bloon_${Date.now()}_${Math.random()}`,
                   type: item.type as any,
                   x: pathStart.x,
                   y: pathStart.y,
                   speed: spec.speed * speedMultiplierByDiff,
-                  hp: spec.hp,
-                  maxHp: spec.hp,
+                  hp: initialHp,
+                  maxHp: initialHp,
                   size: spec.size,
                   color: spec.color,
                   reward: spec.reward,
@@ -490,7 +624,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   isSlowed: false,
                   slowTimer: 0,
                   isCeramic: item.type === 'Ceramic',
-                  isMoab: item.type === 'MOAB',
+                  isMoab: ['MOAB', 'BFB', 'ZOMG', 'DDT', 'BAD'].includes(item.type),
+                  isCamo: item.isCamo,
+                  isRegrow: item.isRegrow,
+                  isFortified: item.isFortified,
                 };
 
                 bloonsRef.current.push(inst);
@@ -501,6 +638,52 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             // Check if all bloons are dead to close the round successfully!
             if (bloonsRef.current.length === 0) {
               setRoundInProgress(false);
+              
+              // Passive income from Banana Farms and Merchant Buccaneers
+              let totalFarmCash = 0;
+              towersRef.current.forEach((t) => {
+                if (t.type === 'farm') {
+                  let payout = 100;
+                  const lv = t.upgradeLevels || [0, 0, 0];
+                  payout += lv[0] * 50; // top path
+                  payout += lv[1] * 35; // middle path
+                  payout += lv[2] * 25; // bottom path
+                  totalFarmCash += payout;
+                  t.popCount += payout; // Track cash generated as "pops"
+                  
+                  floatingTextsRef.current.push({
+                    id: `farm_${t.id}_${Date.now()}`,
+                    x: t.x,
+                    y: t.y - 12,
+                    text: `+$${payout}`,
+                    color: '#eab308', // Gold
+                    life: 45,
+                  });
+                } else if (t.type === 'buccaneer') {
+                  const lv = t.upgradeLevels || [0, 0, 0];
+                  if (lv[2] >= 3) {
+                    let merchantCash = 120;
+                    if (lv[2] === 4) merchantCash = 300;
+                    if (lv[2] === 5) merchantCash = 600;
+                    totalFarmCash += merchantCash;
+                    t.popCount += merchantCash;
+                    
+                    floatingTextsRef.current.push({
+                      id: `merchant_${t.id}_${Date.now()}`,
+                      x: t.x,
+                      y: t.y - 12,
+                      text: `+$${merchantCash} Trade`,
+                      color: '#eab308', // Gold
+                      life: 45,
+                    });
+                  }
+                }
+              });
+
+              if (totalFarmCash > 0) {
+                setCash((prev) => prev + totalFarmCash);
+              }
+
               // Give bonus Round end Cash!
               const bonus = difficulty === 'CHIMPS' ? 0 : 100 + round * 10;
               if (bonus > 0) {
@@ -544,6 +727,57 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             b.slowTimer -= 1;
             if (b.slowTimer <= 0) {
               b.isSlowed = false;
+            }
+          }
+
+          // Regrow Layer Healing Logic
+          if (b.isRegrow) {
+            b.regrowTimer = (b.regrowTimer || 0) + 1;
+            if (b.regrowTimer > 90) { // every 1.5 seconds
+              b.regrowTimer = 0;
+              const style = getBloonStyle(b.type);
+              const maxPossibleHp = b.isFortified ? (b.type === 'Lead' ? style.hp * 4 : style.hp * 2) : style.hp;
+              if (b.hp < maxPossibleHp) {
+                b.hp += 1;
+                particlesRef.current.push({
+                  x: b.x,
+                  y: b.y,
+                  vx: 0,
+                  vy: -0.6,
+                  color: '#22c55e',
+                  life: 12,
+                  maxLife: 12,
+                  size: 2.5,
+                  type: 'spark',
+                });
+              } else {
+                // grows back layers (Red -> Blue -> Green -> Yellow -> Pink)
+                const nextTier = b.type === 'Red' ? 'Blue' :
+                                  b.type === 'Blue' ? 'Green' :
+                                  b.type === 'Green' ? 'Yellow' :
+                                  b.type === 'Yellow' ? 'Pink' : null;
+                if (nextTier) {
+                  b.type = nextTier;
+                  const nextStyle = getBloonStyle(nextTier);
+                  b.color = nextStyle.color;
+                  const newMax = b.isFortified ? (((nextTier as string) === 'Lead') ? nextStyle.hp * 4 : nextStyle.hp * 2) : nextStyle.hp;
+                  b.hp = newMax;
+                  b.maxHp = newMax;
+                  b.size = nextStyle.size;
+                  b.speed = nextStyle.speed;
+                  particlesRef.current.push({
+                    x: b.x,
+                    y: b.y,
+                    vx: 0,
+                    vy: -1.0,
+                    color: '#22c55e',
+                    life: 18,
+                    maxLife: 18,
+                    size: 4.0,
+                    type: 'spark',
+                  });
+                }
+              }
             }
           }
 
@@ -619,10 +853,40 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             t.cooldown -= 1;
           }
 
+          // Passive income towers (Farms) and decorative (Pools) do not shoot
+          if (t.type === 'pool' || t.type === 'farm') {
+            return;
+          }
+
           // Look for targets based on targeting configurations (Close, First, Last, Strong)
           const inRangeBloons = bloonsRef.current.filter((b) => {
             const dist = Math.hypot(b.x - t.x, b.y - t.y);
-            return dist < t.range;
+            const insideRange = dist < t.range;
+            if (!insideRange) return false;
+
+            // Camo invisible block check
+            if (b.isCamo) {
+              if (t.type === 'ninja') return true;
+              // Check if tower has any active Camo upgrade purchased
+              const spec = TOWER_STATS[t.type as Exclude<TowerType, 'hero'>];
+              if (!spec) return false;
+              const lvls = t.upgradeLevels || [0, 0, 0];
+              let canSeeCamo = false;
+              for (let pt = 0; pt < 3; pt++) {
+                const currentLvl = lvls[pt];
+                for (let k = 0; k < currentLvl; k++) {
+                  const upg = spec.upgrades[pt]?.[k];
+                  if (upg?.effects?.canSeeCamo) {
+                    canSeeCamo = true;
+                    break;
+                  }
+                }
+                if (canSeeCamo) break;
+              }
+              return canSeeCamo;
+            }
+
+            return true;
           });
 
           if (inRangeBloons.length === 0) return;
@@ -710,12 +974,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               });
 
               // Create frost waves glowing particles expansion
-              for (let angle = 0; angle < Math.PI * 2; angle += 0.45) {
+              for (let anglePart = 0; anglePart < Math.PI * 2; anglePart += 0.45) {
                 particlesRef.current.push({
                   x: t.x,
                   y: t.y,
-                  vx: Math.cos(angle) * 3.5,
-                  vy: Math.sin(angle) * 3.5,
+                  vx: Math.cos(anglePart) * 3.5,
+                  vy: Math.sin(anglePart) * 3.5,
                   color: '#e0f2fe',
                   life: 15,
                   maxLife: 15,
@@ -728,16 +992,111 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               return;
             }
 
-            // Standard Bullet Dart, Bombs, or Super Energy beams
-            let projectileType: 'dart' | 'bomb' | 'beam' = 'dart';
+            // Ninjas can throw multiple shurikens at once! (Triple/Bloonjitsu)
+            if (t.type === 'ninja') {
+              playShoot();
+              const lv = t.upgradeLevels || [0, 0, 0];
+              let count = 1;
+              if (lv[0] >= 4) count = 5; // Bloonjitsu
+              else if (lv[0] >= 3) count = 2; // Double Shot
+
+              const spreadAngle = 0.12; // angle separation
+              for (let i = 0; i < count; i++) {
+                const offset = (i - (count - 1) / 2) * spreadAngle;
+                projectilesRef.current.push({
+                  id: `ninja_${Date.now()}_${i}_${Math.random()}`,
+                  type: 'shuriken',
+                  x: t.x,
+                  y: t.y,
+                  vx: Math.cos(angle + offset) * 8.5,
+                  vy: Math.sin(angle + offset) * 8.5,
+                  speed: 8.5,
+                  damage: t.damage,
+                  pierce: t.pierce,
+                  rangeRemaining: t.range,
+                });
+              }
+              t.cooldown = t.baseCooldown;
+              return;
+            }
+
+            // Druids throw a fan of 3 thorns!
+            if (t.type === 'druid') {
+              playShoot();
+              const spreadAngle = 0.14;
+              for (let i = 0; i < 3; i++) {
+                const offset = (i - 1) * spreadAngle;
+                projectilesRef.current.push({
+                  id: `druid_${Date.now()}_${i}_${Math.random()}`,
+                  type: 'thorn',
+                  x: t.x,
+                  y: t.y,
+                  vx: Math.cos(angle + offset) * 6.5,
+                  vy: Math.sin(angle + offset) * 6.5,
+                  speed: 6.5,
+                  damage: t.damage,
+                  pierce: t.pierce,
+                  rangeRemaining: t.range,
+                });
+              }
+              t.cooldown = t.baseCooldown;
+              return;
+            }
+
+            // Buccaneers unleash grapes!
+            if (t.type === 'buccaneer') {
+              playShoot();
+              const lv = t.upgradeLevels || [0, 0, 0];
+              const count = lv[1] >= 3 ? 5 : 2; // Grape Shot gives 5 grapes, else 2
+              for (let i = 0; i < count; i++) {
+                const offset = (i - (count - 1) / 2) * 0.12;
+                projectilesRef.current.push({
+                  id: `buc_${Date.now()}_${i}_${Math.random()}`,
+                  type: 'grape',
+                  x: t.x,
+                  y: t.y,
+                  vx: Math.cos(angle + offset) * 6.0,
+                  vy: Math.sin(angle + offset) * 6.0,
+                  speed: 6.0,
+                  damage: t.damage,
+                  pierce: t.pierce,
+                  rangeRemaining: t.range,
+                });
+              }
+              t.cooldown = t.baseCooldown;
+              return;
+            }
+
+            // Standard Bullet Dart, Bombs, or Super Energy beams / other custom projectiles
+            let projectileType: 'dart' | 'bomb' | 'beam' | 'boomerang' | 'glue' | 'magic' | 'potion' = 'dart';
             let speed = 7.5;
+            let splash: number | undefined = undefined;
+
             if (t.type === 'bomb') {
               projectileType = 'bomb';
               speed = 5;
+              splash = 65;
             } else if (t.type === 'super') {
               projectileType = 'beam';
               speed = 10;
               playLaserZap();
+            } else if (t.type === 'boomerang') {
+              projectileType = 'boomerang';
+              speed = 6.0;
+              playShoot();
+            } else if (t.type === 'glue') {
+              projectileType = 'glue';
+              speed = 6.5;
+              playShoot();
+            } else if (t.type === 'wizard') {
+              projectileType = 'magic';
+              speed = 7.0;
+              playLaserZap();
+            } else if (t.type === 'alchemist') {
+              projectileType = 'potion';
+              speed = 5.5;
+              splash = 60;
+              playShoot();
             } else {
               playShoot();
             }
@@ -745,6 +1104,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             // Hero Quincy bow projectile is dart, Obyn or Gwendolin customized
             if (t.type === 'hero' && heroConfig.id === 'gwendolin') {
               projectileType = 'bomb'; // fire explosion
+              splash = 65;
               playShoot();
             }
 
@@ -758,7 +1118,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               speed,
               damage: t.damage,
               pierce: t.pierce,
-              splashRadius: t.type === 'bomb' ? 65 : undefined,
+              splashRadius: splash,
+              targetBloonId: (t.type === 'sub') ? target.id : undefined, // submarine uses homing
               rangeRemaining: t.range,
             });
 
@@ -769,6 +1130,34 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         // --- SECTION D: MOVE & COLLIDE ACTIVE PROJECTILES ---
         for (let pIdx = projectilesRef.current.length - 1; pIdx >= 0; pIdx--) {
           const p = projectilesRef.current[pIdx];
+
+          // Submarine homing torpedo guidance: home in on the targeted bloon ID if alive
+          if (p.targetBloonId) {
+            const targeted = bloonsRef.current.find((b) => b.id === p.targetBloonId);
+            if (targeted) {
+              const dx = targeted.x - p.x;
+              const dy = targeted.y - p.y;
+              const dist = Math.hypot(dx, dy);
+              if (dist > 5) {
+                p.vx = (dx / dist) * p.speed;
+                p.vy = (dy / dist) * p.speed;
+              }
+            } else {
+              // Target is popped, look for the closest bloon in range to re-home
+              let closestB: Bloon | null = null;
+              let minDist = 300;
+              bloonsRef.current.forEach((b) => {
+                const bDist = Math.hypot(b.x - p.x, b.y - p.y);
+                if (bDist < minDist) {
+                  minDist = bDist;
+                  closestB = b;
+                }
+              });
+              if (closestB) {
+                p.targetBloonId = (closestB as Bloon).id;
+              }
+            }
+          }
 
           // Advance projectile coordinate velocities
           p.x += p.vx;
@@ -791,15 +1180,70 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             if (hitDist < b.size + 10) {
               projectileHit = true;
 
-              if (p.type === 'bomb') {
-                // Splash explosive trigger!
+              if (p.type === 'bomb' || p.type === 'potion') {
+                // Splash explosive/potion triggers!
                 playExplosion();
-                triggerExplosionSplash(p.x, p.y, p.splashRadius || 50, p.damage);
+                
+                if (p.type === 'potion') {
+                  // Splash toxic lime-green sparkles!
+                  for (let c = 0; c < 10; c++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 3 + 1.5;
+                    particlesRef.current.push({
+                      x: p.x,
+                      y: p.y,
+                      vx: Math.cos(angle) * speed,
+                      vy: Math.sin(angle) * speed,
+                      color: '#22c55e', // acid green-500
+                      life: 18,
+                      maxLife: 18,
+                      size: 2.5,
+                      type: 'spark',
+                    });
+                  }
+                  // Dissolving acidic splash damage
+                  triggerExplosionSplash(p.x, p.y, p.splashRadius || 60, p.damage);
+                } else {
+                  triggerExplosionSplash(p.x, p.y, p.splashRadius || 50, p.damage);
+                }
+
                 projectilesRef.current.splice(pIdx, 1);
                 break;
               } else {
-                // Simple pierce-reduction projectile hits
-                const damageDealt = b.isFrozen && p.type === 'dart' ? 0 : p.damage; // frozen bloons are immune to default physical darts (BTD mechanic!)
+                // Glue effect slows the target bloon
+                if (p.type === 'glue') {
+                  b.isSlowed = true;
+                  b.slowTimer = 180; // 3 seconds of heavy gooey slow
+                }
+
+                // Simple pierce-reduction projectile hits IMMUNITIES CHECK
+                let baseDmg = p.damage;
+                let dmgMult = 1.0;
+
+                if (b.type === 'BAD') {
+                  b.isFrozen = false;
+                  b.isSlowed = false;
+                }
+
+                const isSharp = ['dart', 'tack', 'boomerang', 'shuriken', 'thorn', 'bullet', 'grape'].includes(p.type);
+
+                if ((b.type === 'Black' || b.type === 'Zebra' || b.type === 'DDT') && p.type === 'bomb') {
+                  dmgMult = 0.0;
+                } else if ((b.type === 'White' || b.type === 'Zebra') && p.type === 'iceRing') {
+                  dmgMult = 0.0;
+                } else if (b.type === 'Purple' && (p.type === 'beam' || p.type === 'magic')) {
+                  dmgMult = 0.0;
+                } else if (b.type === 'Lead' && isSharp) {
+                  dmgMult = 0.0;
+                } else if (b.type === 'DDT' && isSharp) {
+                  dmgMult = 0.0;
+                }
+
+                if (b.isFrozen && p.type === 'dart') {
+                  dmgMult = 0.0;
+                }
+
+                const damageDealt = baseDmg * dmgMult;
                 
                 if (damageDealt > 0) {
                   damageAndPopBloon(b, damageDealt);
@@ -810,8 +1254,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     x: b.x,
                     y: b.y,
                     text: 'Immune!',
-                    color: '#94a3b8',
-                    life: 25,
+                    color: '#f87171',
+                    life: 15,
                   });
                 }
 
@@ -898,6 +1342,35 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           canvas.width,
           canvas.height
         );
+
+        // Render transparent ghost tower preview under the mouse
+        if (mousePos.x >= 0 && mousePos.x <= 1000 && mousePos.y >= 0 && mousePos.y <= 1000) {
+          const previewTower: Tower = {
+            id: 'placement_preview',
+            type: selectedShopTower,
+            x: mousePos.x,
+            y: mousePos.y,
+            range: range,
+            baseCooldown: selectedShopTower === 'hero' ? 45 : TOWER_STATS[selectedShopTower].baseCooldown,
+            cooldown: 0,
+            damage: 1,
+            pierce: 1,
+            cost: selectedShopTower === 'hero' ? 0 : TOWER_STATS[selectedShopTower].cost,
+            popCount: 0,
+            targetMode: 'First',
+            level: 1,
+            upgradeLevels: [0, 0, 0],
+            upgradeIndex: 0,
+            upgradesPurchased: 0,
+            lastAngle: 0, // Faces right by default during preview
+          };
+
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          // Render the actual monkey preview to the canvas!
+          drawTower(ctx, previewTower, canvas.width, canvas.height);
+          ctx.restore();
+        }
       }
 
       // Render Pop Particles
@@ -1012,10 +1485,39 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       // Check Children release splits
       const childType = getChildBloonType(b.type);
       if (childType) {
-        const splitsQuantity = getChildCount(b.type);
-        for (let i = 0; i < splitsQuantity; i++) {
-          const childStyle = getBloonStyle(childType);
-          
+        let siblings: { type: BloonType; isCamo?: boolean; isRegrow?: boolean; isFortified?: boolean }[] = [];
+        
+        if (b.type === 'Zebra') {
+          siblings = [
+            { type: 'Black', isCamo: b.isCamo, isRegrow: b.isRegrow },
+            { type: 'White', isCamo: b.isCamo, isRegrow: b.isRegrow }
+          ];
+        } else if (b.type === 'BAD') {
+          siblings = [
+            { type: 'ZOMG' }, { type: 'ZOMG' },
+            { type: 'DDT' }, { type: 'DDT' }, { type: 'DDT' }
+          ];
+        } else if (b.type === 'DDT') {
+          siblings = [
+            { type: 'Ceramic', isCamo: true, isRegrow: true },
+            { type: 'Ceramic', isCamo: true, isRegrow: true },
+            { type: 'Ceramic', isCamo: true, isRegrow: true },
+            { type: 'Ceramic', isCamo: true, isRegrow: true }
+          ];
+        } else {
+          const count = getChildCount(b.type);
+          for (let i = 0; i < count; i++) {
+            siblings.push({
+              type: childType,
+              isCamo: b.isCamo,
+              isRegrow: b.isRegrow,
+              isFortified: b.isFortified && childType !== 'Ceramic' && !childType.includes('MOAB') && childType !== 'BFB' && childType !== 'ZOMG' && childType !== 'DDT' && childType !== 'BAD'
+            });
+          }
+        }
+
+        siblings.forEach((sib, i) => {
+          const childStyle = getBloonStyle(sib.type);
           // Separate multiple siblings slightly along track to prevent overlapping stacks
           const separationOffset = (i * 12) + 5;
 
@@ -1025,12 +1527,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
           const child: Bloon = {
             id: `bloon_child_${Date.now()}_${Math.random()}`,
-            type: childType,
+            type: sib.type,
             x: b.x,
             y: b.y,
             speed: childSpeedByDiff,
-            hp: childStyle.hp,
-            maxHp: childStyle.hp,
+            hp: sib.isFortified ? (sib.type === 'Lead' ? childStyle.hp * 4 : childStyle.hp * 2) : childStyle.hp,
+            maxHp: sib.isFortified ? (sib.type === 'Lead' ? childStyle.hp * 4 : childStyle.hp * 2) : childStyle.hp,
             size: childStyle.size,
             color: childStyle.color,
             reward: childStyle.reward,
@@ -1041,12 +1543,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             freezeTimer: 0,
             isSlowed: false,
             slowTimer: 0,
-            isCeramic: childType === 'Ceramic',
-            isMoab: false,
+            isCeramic: sib.type === 'Ceramic',
+            isMoab: ['MOAB', 'BFB', 'ZOMG', 'DDT', 'BAD'].includes(sib.type),
+            isCamo: sib.isCamo,
+            isRegrow: sib.isRegrow,
+            isFortified: sib.isFortified,
           };
 
           bloonsRef.current.push(child);
-        }
+        });
       }
 
       // Remove popped parent bloon
@@ -1086,10 +1591,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       type: 'smoke',
     });
 
-    // Inflict splash damage on close targets
+    // Inflict splash damage on close targets with explosive immunities
     bloonsRef.current.forEach((b) => {
       const dist = Math.hypot(b.x - ex, b.y - ey);
       if (dist < rad) { // inside blast radius
+        if (b.type === 'Black' || b.type === 'Zebra' || b.type === 'DDT') {
+          return; // Immune to explosions!
+        }
         damageAndPopBloon(b, dmg);
       }
     });
@@ -1118,7 +1626,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   return (
     <div className="flex flex-col h-screen bg-[var(--app-bg)] font-sans text-white overflow-hidden select-none">
       {/* HUD Top-bar Displays */}
-      <div className="bg-[var(--app-header)] text-white border-b-4 border-black/20 px-6 py-2.5 flex justify-between items-center z-10 shadow-lg">
+      <div className="relative bg-[var(--app-header)] text-white border-b-4 border-black/20 px-6 py-2.5 flex justify-between items-center z-20 shadow-lg">
         <div className="flex items-center gap-4">
           <button
             id="hud-home-btn"
@@ -1139,8 +1647,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </div>
         </div>
 
-        {/* Live Metrics: Lives and Cash matching Design HTML */}
-        <div className="flex items-center gap-6">
+        {/* Live Metrics: Lives and Cash matching Design HTML with integrated Controls */}
+        <div className="flex items-center gap-4 xl:gap-6 flex-wrap justify-center">
           {/* Lives indicator styled like the design HTML layout with red circle */}
           <div className="flex items-center gap-2 animate-pulse" title="Monkey Lives">
             <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-white shadow-sm text-white">
@@ -1164,15 +1672,60 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </div>
 
           {/* Wave/Round indicator styled like wave banner */}
-          <div className="bg-black/30 px-6 py-1.5 rounded-full border-2 border-white/20" title="Battle Round">
+          <div className="bg-black/30 px-5 py-1.5 rounded-full border-2 border-white/20 shrink-0" title="Battle Round">
             <span id="hud-round" className="text-base font-black uppercase text-white">
-              WAVE <span className="text-emerald-305">{round}</span> / {maxRounds}
+              WAVE <span className="text-emerald-300">{round}</span> / {maxRounds}
             </span>
+          </div>
+
+          {/* Vertical divider */}
+          <div className="hidden lg:block h-6 w-[2px] bg-white/25"></div>
+
+          {/* Relocated active wave, fast forward, and autoplay controls bar */}
+          <div className="flex items-center gap-2.5">
+            {/* Play Round Trigger */}
+            <button
+              id="active-round-trigger"
+              disabled={roundInProgress}
+              onClick={startRound}
+              className={`px-3.5 py-1.5 font-black font-sans text-xs rounded-xl flex items-center gap-1 border-b-4 uppercase transition-all select-none ${
+                roundInProgress
+                  ? 'bg-slate-700 text-white/40 cursor-not-allowed border-slate-900'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-white border-emerald-700 hover:scale-[1.03] cursor-pointer animate-pulse'
+              }`}
+            >
+              <Play className="w-3.5 h-3.5 fill-current text-white" />
+              <span>{roundInProgress ? 'Defending' : `START WAVE ${round}`}</span>
+            </button>
+
+            {/* Fast Forward Speed Factor */}
+            <button
+              id="btn-fast-forward"
+              onClick={() => {
+                const next = speedMultiplier === 1 ? 2 : speedMultiplier === 2 ? 3 : 1;
+                setSpeedMultiplier(next);
+              }}
+              className="px-2.5 py-1.5 bg-blue-500 hover:bg-blue-400 border-b-2 border-blue-700 text-white text-xs font-black rounded-lg cursor-pointer uppercase font-sans whitespace-nowrap"
+              title="Toggle speed multiplier"
+            >
+              {speedMultiplier}x FF
+            </button>
+
+            <label className="flex items-center gap-1.5 text-[10px] text-white/85 font-black cursor-pointer uppercase font-sans select-none">
+              <input
+                id="check-autoplay"
+                type="checkbox"
+                checked={autoPlay}
+                onChange={(e) => setAutoPlay(e.target.checked)}
+                className="rounded text-[var(--app-accent)] bg-black/45 w-3.5 h-3.5 border-white/20 focus:ring-0 cursor-pointer"
+              />
+              <span>AUTO START</span>
+            </label>
           </div>
         </div>
 
         {/* Audio / Auto Settings */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <button
             id="btn-sound-toggle"
             onClick={handleToggleMute}
@@ -1194,6 +1747,218 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           >
             <HelpCircle className="w-4 h-4" />
           </button>
+
+          <button
+            id="game-settings-trigger"
+            onClick={() => {
+              try {
+                const saveObj = {
+                  monkey_money: localStorage.getItem('btd_monkey_money') || '350',
+                  purchased_perks: localStorage.getItem('btd_purchased_perks') || '[]',
+                  achievements: localStorage.getItem('btd_achievements') || '[]',
+                  timestamp: Date.now()
+                };
+                const code = btoa(unescape(encodeURIComponent(JSON.stringify(saveObj))));
+                setExportedCodeString(code);
+              } catch (e) {}
+              setShowGameSettingsModal((prev) => !prev);
+            }}
+            className={`p-2 rounded-lg border transition-all cursor-pointer ${
+              showGameSettingsModal
+                ? 'bg-amber-500 border-amber-700 text-white shadow'
+                : 'bg-[var(--app-button)] border-b-2 border-black/30 hover:brightness-110 text-white'
+            }`}
+            title="Options & Themes"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+
+          {/* Settings absolute dropdown menu inside top bar */}
+          {showGameSettingsModal && (
+            <div className="absolute right-0 top-[48px] bg-[var(--app-panel)] rounded-2xl border-4 border-black/25 w-80 text-white p-4 shadow-2xl flex flex-col gap-3 z-50 animate-scale-up max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <h2 className="text-xs font-black text-yellow-300 flex items-center gap-1.5 uppercase italic">
+                  <Settings className="w-4 h-4 text-yellow-400" />
+                  Arena Settings
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowGameSettingsModal(false);
+                    setImportStatus(null);
+                    setPastedCode('');
+                  }}
+                  className="p-1 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 1. Theme Configuration */}
+              {themeColors && onChangeTheme && (
+                <div className="flex flex-col gap-1.5 bg-black/25 p-2.5 rounded-xl border border-white/5">
+                  <span className="text-[9px] text-yellow-300 font-sans font-black uppercase tracking-widest flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-pink-400" /> Custom UI Theme
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                    {PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => onChangeTheme(p.colors)}
+                        className={`px-2 py-1 text-[9px] font-black rounded border text-left transition-all cursor-pointer ${
+                          themeColors.bg === p.colors.bg
+                            ? 'bg-emerald-500/20 border-emerald-450 text-emerald-300 shadow'
+                            : 'bg-slate-800/60 border-slate-700 hover:border-slate-650 text-slate-200'
+                        }`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Audio Settings inline */}
+              <div className="flex flex-col gap-1.5 bg-black/25 p-2.5 rounded-xl border border-white/5">
+                <span className="text-[9px] text-yellow-300 font-sans font-black uppercase tracking-widest flex items-center gap-1">
+                  {isAudioMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />} Audio Sound FX
+                </span>
+                <div className="flex items-center justify-between mt-0.5 text-[10px]">
+                  <span className="text-white/70 font-bold">Synthesizer:</span>
+                  <button
+                    onClick={handleToggleMute}
+                    className={`px-2.5 py-1 rounded text-[9px] font-black uppercase border transition-all cursor-pointer ${
+                      isAudioMuted
+                        ? 'bg-rose-600/25 border-rose-500 text-rose-350'
+                        : 'bg-emerald-500/25 border-emerald-450 text-emerald-300'
+                    }`}
+                  >
+                    {isAudioMuted ? 'Muted' : 'Sound On'}
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Backup Settings Save Transfer */}
+              <div className="flex flex-col gap-1.5 bg-black/25 p-2.5 rounded-xl border border-white/5">
+                <span className="text-[9px] text-yellow-300 font-sans font-black uppercase tracking-widest flex items-center gap-1">
+                  <Save className="w-3.5 h-3.5 text-blue-400" /> Save Code Operations
+                </span>
+
+                {/* Export code row */}
+                <div className="flex flex-col gap-1">
+                  <button
+                    id="btn-export-game-settings"
+                    onClick={() => {
+                      try {
+                        const saveObj = {
+                          monkey_money: localStorage.getItem('btd_monkey_money') || '350',
+                          purchased_perks: localStorage.getItem('btd_purchased_perks') || '[]',
+                          achievements: localStorage.getItem('btd_achievements') || '[]',
+                          timestamp: Date.now()
+                        };
+                        const code = btoa(unescape(encodeURIComponent(JSON.stringify(saveObj))));
+                        setExportedCodeString(code);
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                          navigator.clipboard.writeText(code);
+                          setCopyFeedback(true);
+                          setTimeout(() => setCopyFeedback(false), 3000);
+                        }
+                      } catch (e) {}
+                    }}
+                    className="w-full py-1 bg-slate-700 hover:bg-slate-650 border border-slate-600 text-white font-sans font-black text-[9px] tracking-wide rounded uppercase flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    {copyFeedback ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-350" />}
+                    {copyFeedback ? 'Copied code!' : 'Export Backup'}
+                  </button>
+                  {exportedCodeString && (
+                    <textarea
+                      readOnly
+                      value={exportedCodeString}
+                      className="w-full text-[8px] bg-black/50 p-1 border border-white/10 rounded text-emerald-300 font-mono resize-none focus:outline-none focus:ring-0 select-all"
+                      rows={2}
+                      onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                    />
+                  )}
+                </div>
+
+                {/* Import code row */}
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="text"
+                    placeholder="Paste backup code..."
+                    value={pastedCode}
+                    onChange={(e) => setPastedCode(e.target.value)}
+                    className="w-full text-[9px] bg-black/45 border border-white/10 rounded py-1 px-2 text-white placeholder-white/30 focus:ring-0 focus:outline-none"
+                  />
+                  <button
+                    id="btn-import-game-settings"
+                    onClick={() => {
+                      setImportStatus(null);
+                      if (!pastedCode.trim()) {
+                        setImportStatus({ error: "Paste backup text first!" });
+                        return;
+                      }
+                      try {
+                        const raw = decodeURIComponent(escape(atob(pastedCode.trim())));
+                        const saveObj = JSON.parse(raw);
+                        if (saveObj && typeof saveObj === 'object') {
+                          localStorage.setItem('btd_monkey_money', saveObj.monkey_money || '350');
+                          localStorage.setItem('btd_purchased_perks', saveObj.purchased_perks || '[]');
+                          localStorage.setItem('btd_achievements', saveObj.achievements || '[]');
+                          setImportStatus({ success: true });
+                          setPastedCode('');
+                          setTimeout(() => {
+                            setImportStatus(null);
+                            window.location.reload();
+                          }, 1200);
+                        } else {
+                          setImportStatus({ error: "Invalid layout format!" });
+                        }
+                      } catch (e) {
+                        setImportStatus({ error: "Failed to parse layout!" });
+                      }
+                    }}
+                    className="w-full py-1 bg-indigo-650 hover:bg-indigo-600 border border-indigo-500 text-white font-sans font-black text-[9px] tracking-wide rounded uppercase transition-all cursor-pointer"
+                  >
+                    Apply & Reload
+                  </button>
+                  {importStatus?.success && (
+                    <span className="text-[8px] text-emerald-400 font-bold block text-center animate-pulse">
+                      ✓ Success! Restarting...
+                    </span>
+                  )}
+                  {importStatus?.error && (
+                    <span className="text-[8px] text-rose-400 font-bold block text-center">
+                      ✕ {importStatus.error}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Match Controls */}
+              <div className="flex flex-col gap-1.5 bg-black/25 p-2.5 rounded-xl border border-white/5">
+                <span className="text-[9px] text-yellow-300 font-sans font-black uppercase tracking-widest flex items-center gap-1">
+                  ⚔️ Area Operations
+                </span>
+                <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                  <button
+                    onClick={restartMatch}
+                    className="py-1 px-2 bg-blue-650 hover:bg-blue-500 border-b-2 border-blue-800 text-white font-sans font-black text-[9px] tracking-wider rounded uppercase transition-all cursor-pointer shadow flex items-center justify-center gap-0.5"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Restart
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowGameSettingsModal(false);
+                      onNavigateHome();
+                    }}
+                    className="py-1 px-2 bg-rose-650 hover:bg-rose-500 border-b-2 border-rose-800 text-white font-sans font-black text-[9px] tracking-wider rounded uppercase transition-all cursor-pointer shadow flex items-center justify-center gap-0.5"
+                  >
+                    <X className="w-3 h-3" /> Quit Map
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1446,48 +2211,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             onClick={handleCanvasClick}
             className="w-full max-w-2xl aspect-square bg-slate-900 border-4 border-black/30 rounded-3xl cursor-crosshair shadow-2xl block"
           />
-
-          {/* Speed settings overlay panel inside canvas boundaries bottom-right */}
-          <div className="absolute bottom-6 right-6 flex items-center gap-2.5 z-10 bg-[var(--app-panel)] border border-white/10 px-3.5 py-2 rounded-2xl shadow-xl">
-            {/* Play Round Trigger */}
-            <button
-              id="active-round-trigger"
-              disabled={roundInProgress}
-              onClick={startRound}
-              className={`px-4 py-2 font-black font-sans text-xs rounded-xl flex items-center gap-1 border-b-4 uppercase transition-all ${
-                roundInProgress
-                  ? 'bg-[var(--app-subpanel)] text-white/40 cursor-not-allowed border-black/30'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-white border-emerald-700 hover:scale-103 cursor-pointer animate-pulse font-black'
-              }`}
-            >
-              <Play className="w-4 h-4 fill-current text-white" />
-              <span>{roundInProgress ? 'Defending...' : `START WAVE ${round}`}</span>
-            </button>
-
-            {/* Fast Forward Speed Factor */}
-            <button
-              id="btn-fast-forward"
-              onClick={() => {
-                const next = speedMultiplier === 1 ? 2 : speedMultiplier === 2 ? 3 : 1;
-                setSpeedMultiplier(next);
-              }}
-              className="p-2 bg-blue-500 hover:bg-blue-400 border-b-2 border-blue-700 text-white text-xs font-black rounded-xl cursor-pointer uppercase font-sans whitespace-nowrap"
-              title="Toggle speed multiplier"
-            >
-              {speedMultiplier}x FF
-            </button>
-
-            <label className="flex items-center gap-1.5 text-[10px] text-white/80 font-extrabold ml-2 cursor-pointer uppercase font-sans">
-              <input
-                id="check-autoplay"
-                type="checkbox"
-                checked={autoPlay}
-                onChange={(e) => setAutoPlay(e.target.checked)}
-                className="rounded text-[var(--app-accent)] bg-black/45 border-white/10 focus:ring-0 cursor-pointer"
-              />
-              AUTOPLAY
-            </label>
-          </div>
         </div>
 
         {/* Right Monkey Store (Deploy options list) */}
@@ -1526,6 +2249,31 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <span className="font-extrabold text-xs">{heroConfig.name}</span>
                     <span className="text-[8px] bg-amber-500/20 border border-amber-500/40 text-amber-400 px-1.5 rounded-full font-bold">HERO</span>
                   </div>
+
+                  {/* Hero Image representation on top of description */}
+                  {(() => {
+                    const heroEmojis: Record<string, string> = {
+                      quincy: '🏹',
+                      gwendolin: '🔥',
+                      obyn: '🌳',
+                    };
+                    const emojiValue = heroEmojis[heroConfig.id] || '👑';
+                    return (
+                      <div className="w-full h-16 rounded-xl mb-1.5 flex flex-col items-center justify-center relative overflow-hidden bg-black/40 border border-white/5 shadow-inner p-1">
+                        <div 
+                          className="absolute inset-0 opacity-15 blur-sm"
+                          style={{ backgroundColor: heroConfig.primaryColor }}
+                        />
+                        <span className="text-2xl relative z-10 filter drop-shadow-md select-none">
+                          {emojiValue}
+                        </span>
+                        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 rounded text-[7px] text-amber-450 tracking-wide font-black uppercase">
+                          Captain
+                        </span>
+                      </div>
+                    );
+                  })()}
+
                   <p className="text-[10px] text-slate-400 line-clamp-1 mb-1 shadow-sm leading-relaxed text-[10px]">{heroConfig.description}</p>
                   
                   {hasHeroOnGrid ? (
@@ -1562,6 +2310,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   }`}
                 >
                   <span className="font-sans font-black text-xs capitalize leading-none mb-1 tracking-tight">{type}</span>
+
+                  {/* Tower Image representation on top of description */}
+                  {(() => {
+                    const vis = TOWER_VISUALS[type] || { emoji: '🐒', color: '#4b5563', tag: 'Popper Unit' };
+                    return (
+                      <div className="w-full h-16 rounded-xl mb-1.5 flex flex-col items-center justify-center relative overflow-hidden bg-black/40 border border-white/5 shadow-inner p-1">
+                        <div 
+                          className="absolute inset-0 opacity-15 blur-sm"
+                          style={{ backgroundColor: vis.color }}
+                        />
+                        <span className="text-2xl relative z-10 filter drop-shadow-md select-none">
+                          {vis.emoji}
+                        </span>
+                        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 rounded text-[7px] text-slate-300 tracking-wide font-black uppercase">
+                          {vis.tag}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
                   <p className="text-[9px] text-white/80 leading-normal line-clamp-2 mb-2 flex-1 font-bold">{TOWER_STATS[type].description}</p>
                   
                   <span className="text-xs font-black text-yellow-300 mt-auto flex items-center gap-0.5">
@@ -1572,16 +2340,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               );
             })}
           </div>
-
-          {/* Quick instructions details */}
-          <div className="mt-auto bg-[var(--app-subpanel)] p-3.5 rounded-2xl border border-white/5 flex flex-col gap-1.5 text-[11px] leading-relaxed text-white/70 font-bold uppercase shadow-inner">
-            <span className="font-sans font-black text-white">Deployment Protocol</span>
-            <span>• Keep defenders close to curves to capitalize range.</span>
-            <span>• Placement has obstacles! Avoid tracks or overlapping circles.</span>
-          </div>
         </div>
       </div>
-        {/* Rules Help Modal */}
+
+      {/* Rules Help Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-[var(--app-panel)] rounded-3xl border-4 border-black/20 max-w-md w-full text-white p-6 relative shadow-2xl">

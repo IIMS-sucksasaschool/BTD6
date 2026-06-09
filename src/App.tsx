@@ -420,6 +420,8 @@ export default function App() {
           heroXpRateBonus={getHeroXpRateBonusValue()}
           onGameOver={handleGameOver}
           onNavigateHome={() => setScreen('lobby')}
+          themeColors={themeColors}
+          onChangeTheme={(colors) => updateAccountStats(undefined, undefined, undefined, colors)}
         />
       )}
 

@@ -1,4 +1,4 @@
-export type TowerType = 'dart' | 'tack' | 'sniper' | 'bomb' | 'ice' | 'super' | 'hero';
+export type TowerType = 'dart' | 'tack' | 'sniper' | 'bomb' | 'ice' | 'super' | 'boomerang' | 'ninja' | 'glue' | 'wizard' | 'alchemist' | 'druid' | 'farm' | 'sub' | 'buccaneer' | 'pool' | 'hero';
 
 export type TargetMode = 'First' | 'Last' | 'Strong' | 'Close';
 
@@ -28,7 +28,7 @@ export interface TowerStats {
   upgrades: [Upgrade[], Upgrade[], Upgrade[]];
 }
 
-export type BloonType = 'Red' | 'Blue' | 'Green' | 'Yellow' | 'Pink' | 'Ceramic' | 'MOAB';
+export type BloonType = 'Red' | 'Blue' | 'Green' | 'Yellow' | 'Pink' | 'Black' | 'White' | 'Purple' | 'Lead' | 'Zebra' | 'Rainbow' | 'Ceramic' | 'MOAB' | 'BFB' | 'ZOMG' | 'DDT' | 'BAD';
 
 export interface Bloon {
   id: string;
@@ -50,6 +50,10 @@ export interface Bloon {
   slowTimer: number;
   isCeramic: boolean;
   isMoab: boolean;
+  isCamo?: boolean;
+  isRegrow?: boolean;
+  isFortified?: boolean;
+  regrowTimer?: number;
 }
 
 export interface Tower {
@@ -76,7 +80,7 @@ export interface Tower {
 
 export interface Projectile {
   id: string;
-  type: 'dart' | 'tack' | 'bullet' | 'bomb' | 'iceRing' | 'beam';
+  type: 'dart' | 'tack' | 'bullet' | 'bomb' | 'iceRing' | 'beam' | 'boomerang' | 'shuriken' | 'glue' | 'magic' | 'potion' | 'thorn' | 'grape';
   x: number;
   y: number;
   vx: number;

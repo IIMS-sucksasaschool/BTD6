@@ -163,61 +163,152 @@ export function drawBloon(
   ctx.save();
 
   if (bloon.isMoab) {
-    // RENDER MOAB BLIMP
-    // Draw Cyan oval with fins
+    // RENDER MOAB CLASS SPECIAL HIGH-FIDELITY BLIMPS
     ctx.translate(rx, ry);
     
-    // Add horizontal wobbling for animation effect
-    const waveWobble = Math.sin(Date.now() * 0.01) * 0.05;
+    // Wobble animation effect for flying blimps
+    const waveWobble = Math.sin(Date.now() * 0.008) * 0.04;
     ctx.rotate(waveWobble);
 
-    // Blimp body
-    const blimpLength = bSize * 2.1;
-    const blimpWidth = bSize * 1.35;
+    let blimpLength = bSize * 2.1;
+    let blimpWidth = bSize * 1.35;
+    let mainColor = '#0891b2'; // cyan-600
+    let altColor = '#22d3ee'; // cyan-400
+    let darkColor = '#155e75'; // cyan-800
+    let finColor = '#ef4444'; // default red
+    const type = bloon.type;
+
+    if (type === 'BFB') {
+      blimpLength = bSize * 2.3;
+      blimpWidth = bSize * 1.48;
+      mainColor = '#dc2626'; // Red body
+      altColor = '#f87171';
+      darkColor = '#7f1d1d';
+      finColor = '#f59e0b'; // Gold fins
+    } else if (type === 'ZOMG') {
+      blimpLength = bSize * 2.65;
+      blimpWidth = bSize * 1.68;
+      mainColor = '#1e293b'; // Black/Slate body
+      altColor = '#475569';
+      darkColor = '#0f172a';
+      finColor = '#22c55e'; // Green fins
+    } else if (type === 'DDT') {
+      blimpLength = bSize * 2.15;
+      blimpWidth = bSize * 1.28;
+      mainColor = '#1e293b'; // Charcoal body
+      altColor = '#334155';
+      darkColor = '#090d16';
+      finColor = '#475569'; // Grey fins
+    } else if (type === 'BAD') {
+      blimpLength = bSize * 2.92;
+      blimpWidth = bSize * 1.88;
+      mainColor = '#7e22ce'; // Purple-rich body
+      altColor = '#a855f7';
+      darkColor = '#4c1d95';
+      finColor = '#ec4899'; // Magenta/pink fins
+    }
 
     // Tail Fins
-    ctx.fillStyle = '#ef4444'; // Red fins
+    ctx.fillStyle = finColor;
     ctx.beginPath();
-    ctx.moveTo(-blimpLength * 0.5, -blimpWidth * 0.3);
-    ctx.lineTo(-blimpLength * 0.8, -blimpWidth * 0.8);
-    ctx.lineTo(-blimpLength * 0.4, -blimpWidth * 0.2);
+    ctx.moveTo(-blimpLength * 0.5, -blimpWidth * 0.35);
+    ctx.lineTo(-blimpLength * 0.85, -blimpWidth * 0.82);
+    ctx.lineTo(-blimpLength * 0.42, -blimpWidth * 0.22);
     ctx.closePath();
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(-blimpLength * 0.5, blimpWidth * 0.3);
-    ctx.lineTo(-blimpLength * 0.8, blimpWidth * 0.8);
-    ctx.lineTo(-blimpLength * 0.4, blimpWidth * 0.2);
+    ctx.moveTo(-blimpLength * 0.5, blimpWidth * 0.35);
+    ctx.lineTo(-blimpLength * 0.85, blimpWidth * 0.82);
+    ctx.lineTo(-blimpLength * 0.42, blimpWidth * 0.22);
     ctx.closePath();
     ctx.fill();
 
-    // Main Blimp Balloon
+    // Main Balloon body
     const blimpGrad = ctx.createRadialGradient(
       blimpLength * 0.1, -blimpWidth * 0.2, blimpWidth * 0.2,
-      0, 0, blimpLength * 0.6
+      0, 0, blimpLength * 0.65
     );
-    blimpGrad.addColorStop(0, '#22d3ee'); // light cyan-400
-    blimpGrad.addColorStop(0.7, '#0891b2'); // cyan-600
-    blimpGrad.addColorStop(1, '#155e75'); // cyan-800
+    blimpGrad.addColorStop(0, altColor);
+    blimpGrad.addColorStop(0.65, mainColor);
+    blimpGrad.addColorStop(1, darkColor);
     
     ctx.fillStyle = blimpGrad;
     ctx.beginPath();
     ctx.ellipse(0, 0, blimpLength * 0.65, blimpWidth * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // White Shark Stripes or outlines characteristic to MOAB
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, blimpLength * 0.3, blimpWidth * 0.5, 0, Math.PI * 0.5, Math.PI * 1.5);
-    ctx.stroke();
+    // Custom blimp specific graphics overlays
+    if (type === 'ZOMG') {
+      // Bold glowing green 'Z'
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(-blimpLength * 0.2, -blimpWidth * 0.25);
+      ctx.lineTo(blimpLength * 0.2, -blimpWidth * 0.25);
+      ctx.lineTo(-blimpLength * 0.2, blimpWidth * 0.25);
+      ctx.lineTo(blimpLength * 0.2, blimpWidth * 0.25);
+      ctx.stroke();
+    } else if (type === 'DDT') {
+      // Tribal glowing cyber tech lines
+      ctx.strokeStyle = '#38bdf8'; // sky blue glowing cyber lines
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, blimpLength * 0.35, blimpWidth * 0.22, 0, 0, Math.PI);
+      ctx.stroke();
+    } else if (type === 'BAD') {
+      // Hot pink massive segmented iron bands
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, blimpLength * 0.38, blimpWidth * 0.48, 0, Math.PI * 0.5, Math.PI * 1.5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(0, 0, blimpLength * 0.18, blimpWidth * 0.48, 0, Math.PI * 0.5, Math.PI * 1.5);
+      ctx.stroke();
+    } else {
+      // Classic MOAB shark teeth lines / white belt
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, blimpLength * 0.3, blimpWidth * 0.5, 0, Math.PI * 0.5, Math.PI * 1.5);
+      ctx.stroke();
+    }
 
-    // Draw eye window
+    // Fortified heavy iron armor plating cage on blimps
+    if (bloon.isFortified) {
+      ctx.strokeStyle = '#78716c'; // cold stone/iron grey
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, blimpLength * 0.48, blimpWidth * 0.42, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // armor rivets
+      ctx.fillStyle = '#cbd5e1';
+      for (let i = 0; i < 8; i++) {
+        const theta = (i * Math.PI) / 4;
+        const bx = Math.cos(theta) * (blimpLength * 0.48);
+        const by = Math.sin(theta) * (blimpWidth * 0.42);
+        ctx.beginPath();
+        ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Camo Stealth details on blimps
+    if (bloon.isCamo || type === 'DDT') {
+      ctx.strokeStyle = '#15803d'; // army tactical camo bands
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, blimpLength * 0.25, blimpWidth * 0.35, Math.PI / 4, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    // Pilot cockpit eye window
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(blimpLength * 0.3, -blimpWidth * 0.1, bSize * 0.22, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = (type === 'DDT' || type === 'ZOMG') ? '#22c55e' : '#1e293b'; // green tech dashboard cockpit
     ctx.beginPath();
     ctx.arc(blimpLength * 0.32, -blimpWidth * 0.1, bSize * 0.1, 0, Math.PI * 2);
     ctx.fill();
@@ -255,24 +346,113 @@ export function drawBloon(
     ctx.fillStyle = bloon.color;
     ctx.fill();
 
-    // Main balloon oval body
-    const balloonGradient = ctx.createRadialGradient(
-      rx - bSize * 0.25,
-      ry - bSize * 0.25,
-      bSize * 0.1,
-      rx,
-      ry,
-      bSize
-    );
-    balloonGradient.addColorStop(0, '#ffffff'); // bright shine point
-    balloonGradient.addColorStop(0.2, bloon.color);
-    // Darken edge for depth
-    balloonGradient.addColorStop(1, adjustColorBrightness(bloon.color, -40));
+    // Main balloon oval body shaders
+    let balloonGradient: CanvasGradient;
+
+    if (bloon.type === 'Zebra') {
+      balloonGradient = ctx.createLinearGradient(rx - bSize, ry, rx + bSize, ry);
+      balloonGradient.addColorStop(0, '#111827'); // dark black
+      balloonGradient.addColorStop(0.18, '#111827');
+      balloonGradient.addColorStop(0.2, '#ffffff'); // bright silver stripe
+      balloonGradient.addColorStop(0.38, '#ffffff');
+      balloonGradient.addColorStop(0.4, '#111827');
+      balloonGradient.addColorStop(0.58, '#111827');
+      balloonGradient.addColorStop(0.6, '#ffffff');
+      balloonGradient.addColorStop(0.78, '#ffffff');
+      balloonGradient.addColorStop(0.8, '#111827');
+      balloonGradient.addColorStop(1.0, '#ffffff');
+    } else if (bloon.type === 'Rainbow') {
+      balloonGradient = ctx.createLinearGradient(rx, ry - bSize, rx, ry + bSize);
+      balloonGradient.addColorStop(0.0, '#ef4444'); // red arc
+      balloonGradient.addColorStop(0.22, '#f97316'); // orange arc
+      balloonGradient.addColorStop(0.42, '#eab308'); // yellow arc
+      balloonGradient.addColorStop(0.62, '#22c55e'); // green arc
+      balloonGradient.addColorStop(0.82, '#3b82f6'); // blue arc
+      balloonGradient.addColorStop(1.0, '#a855f7'); // purple arc
+    } else if (bloon.type === 'Lead') {
+      // Sleek iron gradient
+      balloonGradient = ctx.createLinearGradient(rx - bSize, ry - bSize, rx + bSize, ry + bSize);
+      balloonGradient.addColorStop(0, '#cbd5e1'); // silver glare highlight
+      balloonGradient.addColorStop(0.25, '#64748b'); // cold gunmetal
+      balloonGradient.addColorStop(0.5, '#cbd5e1'); // silver sheen
+      balloonGradient.addColorStop(0.8, '#334155'); // iron core
+      balloonGradient.addColorStop(1, '#0f172a');
+    } else {
+      balloonGradient = ctx.createRadialGradient(
+        rx - bSize * 0.25,
+        ry - bSize * 0.25,
+        bSize * 0.1,
+        rx,
+        ry,
+        bSize
+      );
+      balloonGradient.addColorStop(0, '#ffffff'); // bright shine point
+      balloonGradient.addColorStop(0.2, bloon.color);
+      // Darken edge for depth
+      balloonGradient.addColorStop(1, adjustColorBrightness(bloon.color, -40));
+    }
 
     ctx.fillStyle = balloonGradient;
     ctx.beginPath();
     ctx.ellipse(rx, ry, bSize * 0.85, bSize * 1.05, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Camo military diagonal stripes on balloon if isCamo
+    if (bloon.isCamo) {
+      ctx.strokeStyle = 'rgba(120, 53, 15, 0.75)'; // camouflage brown
+      ctx.lineWidth = bSize * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(rx - bSize * 0.5, ry + bSize * 0.3);
+      ctx.lineTo(rx + bSize * 0.5, ry - bSize * 0.6);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(21, 128, 61, 0.75)'; // camouflage green
+      ctx.lineWidth = bSize * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(rx - bSize * 0.5, ry - bSize * 0.1);
+      ctx.lineTo(rx + bSize * 0.5, ry + bSize * 0.8);
+      ctx.stroke();
+    }
+
+    // Fortified heavy iron cage guard modifier on regular balloons
+    if (bloon.isFortified) {
+      ctx.strokeStyle = '#4b5563'; // real-grade iron gray cage
+      ctx.lineWidth = 3.0;
+      // horizontal rib
+      ctx.beginPath();
+      ctx.arc(rx, ry, bSize * 0.9, 0, Math.PI, true);
+      ctx.stroke();
+      // vertical rib
+      ctx.beginPath();
+      ctx.arc(rx, ry, bSize * 0.9, -Math.PI / 2, Math.PI / 2);
+      ctx.stroke();
+      // metal bracket bolts
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.arc(rx, ry - bSize * 0.9, 1.8, 0, Math.PI * 2);
+      ctx.arc(rx, ry + bSize * 0.9, 1.8, 0, Math.PI * 2);
+      ctx.arc(rx - bSize * 0.88, ry, 1.8, 0, Math.PI * 2);
+      ctx.arc(rx + bSize * 0.88, ry, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Regrow vine foliage symbol heart inside regular balloons
+    if (bloon.isRegrow) {
+      ctx.fillStyle = '#22c55e'; // Vibrant regrow green heart symbol
+      ctx.beginPath();
+      const hx = rx;
+      const hy = ry + bSize * 0.05;
+      const d = bSize * 0.32;
+      ctx.moveTo(hx, hy + d * 0.5);
+      ctx.bezierCurveTo(hx - d, hy - d * 0.5, hx - d, hy - d * 1.5, hx, hy - d * 0.5);
+      ctx.bezierCurveTo(hx + d, hy - d * 1.5, hx + d, hy - d * 0.5, hx, hy + d * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
 
     if (bloon.isCeramic) {
       // Draw clay / stone mask on Ceramic bloons
@@ -302,10 +482,12 @@ export function drawBloon(
     }
 
     // High Gloss reflection spot (gives gorgeous BTD 3D arcade touch)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-    ctx.beginPath();
-    ctx.ellipse(rx - bSize * 0.32, ry - bSize * 0.42, bSize * 0.18, bSize * 0.12, -Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
+    if (bloon.type !== 'Lead' && bloon.type !== 'Zebra' && bloon.type !== 'Rainbow') {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      ctx.beginPath();
+      ctx.ellipse(rx - bSize * 0.32, ry - bSize * 0.42, bSize * 0.18, bSize * 0.12, -Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Ice overlay freeze display
@@ -732,6 +914,309 @@ export function drawTower(
       ctx.arc(tSize * 0.22, tSize * 0.15, tSize * 0.12, 0, Math.PI * 2);
       ctx.fill();
     }
+  } else if (tower.type === 'boomerang') {
+    // Boomerang Monkey (Cyan clothing, holding a curved boomerang)
+    ctx.rotate(angle);
+    ctx.fillStyle = '#b45309'; // Fur
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.35, 0, tSize * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#06b6d4'; // Cyan vest
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.35, 0, tSize * 0.92, -0.5, 0.5);
+    ctx.lineTo(-tSize * 0.3, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#fecdd3'; // Peach Face
+    ctx.beginPath();
+    ctx.ellipse(tSize * 0.1, 0, tSize * 0.65, tSize * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Blue headband
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.35, 0, tSize * 0.91, -Math.PI * 0.25, Math.PI * 0.25);
+    ctx.stroke();
+
+    // Hand holding a white boomerang
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(tSize * 0.35, tSize * 0.4);
+    ctx.quadraticCurveTo(tSize * 0.8, tSize * 0.8, tSize * 0.9, tSize * 0.2);
+    ctx.quadraticCurveTo(tSize * 0.7, tSize * 0.6, tSize * 0.35, tSize * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+  } else if (tower.type === 'ninja') {
+    // Ninja Monkey (Dark slate gray robes, red headband)
+    ctx.rotate(angle);
+    ctx.fillStyle = '#1e293b'; // Slate dark robes
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.3, 0, tSize * 0.88, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ef4444'; // Red headband tails behind it
+    ctx.beginPath();
+    ctx.moveTo(-tSize * 1.1, -tSize * 0.2);
+    ctx.lineTo(-tSize * 1.5, -tSize * 0.4);
+    ctx.lineTo(-tSize * 1.2, 0);
+    ctx.lineTo(-tSize * 1.5, tSize * 0.4);
+    ctx.lineTo(-tSize * 1.1, tSize * 0.2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Face cut-out mask
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-tSize * 0.2, -tSize * 0.4, tSize * 0.8, tSize * 0.8);
+    ctx.fillStyle = '#fdba74'; // Peach skin eye strip
+    ctx.fillRect(tSize * 0.1, -tSize * 0.2, tSize * 0.4, tSize * 0.4);
+
+    // Glowing white eyes
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(tSize * 0.25, -tSize * 0.08, tSize * 0.08, 0, Math.PI * 2);
+    ctx.arc(tSize * 0.25, tSize * 0.08, tSize * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Double/Bloonjitsu gives golden shuriken in hand
+    const lv = tower.upgradeLevels || [0, 0, 0];
+    if (lv[0] >= 3) {
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(tSize * 0.5, tSize * 0.5, tSize * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else if (tower.type === 'glue') {
+    // Glue Gunner (Yellow protective hazmat suit/hood)
+    ctx.rotate(angle);
+    ctx.fillStyle = '#eab308'; // Bright yellow safety suit
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.1, 0, tSize * 1.0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glass visor
+    ctx.fillStyle = '#38bdf8'; // Blue glass
+    ctx.beginPath();
+    ctx.ellipse(tSize * 0.28, 0, tSize * 0.4, tSize * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Glue hose weapon (Green nozzle)
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(tSize * 0.4, tSize * 0.2, tSize * 0.7, tSize * 0.3);
+    ctx.fillStyle = '#22c55e'; // Green lime glue tip
+    ctx.fillRect(tSize * 1.05, tSize * 0.18, tSize * 0.15, tSize * 0.34);
+
+  } else if (tower.type === 'wizard') {
+    // Monkey Wizard (Arcane purple robes, gold star hat)
+    ctx.rotate(angle);
+    ctx.fillStyle = '#6d28d9'; // Arcane Purple robe
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.2, 0, tSize * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Gold star on robe
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.2, tSize * 0.5, tSize * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Face skin
+    ctx.fillStyle = '#fecdd3';
+    ctx.beginPath();
+    ctx.ellipse(tSize * 0.1, 0, tSize * 0.6, tSize * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Star pointed hat drawing
+    ctx.fillStyle = '#4c1d95'; // Deep violet hat
+    ctx.beginPath();
+    ctx.moveTo(-tSize * 0.6, -tSize * 0.6);
+    ctx.lineTo(-tSize * 1.45, 0); // pointing backwards
+    ctx.lineTo(-tSize * 0.6, tSize * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing magic aura hands
+    ctx.fillStyle = '#60a5fa'; // Blue mana
+    ctx.beginPath();
+    ctx.arc(tSize * 0.52, -tSize * 0.35, tSize * 0.25, 0, Math.PI * 2);
+    ctx.arc(tSize * 0.52, tSize * 0.35, tSize * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (tower.type === 'alchemist') {
+    // Alchemist (Purple wizard-like coat, throwing beaker flask)
+    ctx.rotate(angle);
+    ctx.fillStyle = '#1e1b4b'; // Indigo coat
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.2, 0, tSize * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Face skin with gold glasses!
+    ctx.fillStyle = '#fdba74';
+    ctx.beginPath();
+    ctx.ellipse(tSize * 0.08, 0, tSize * 0.65, tSize * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Gold glasses frame
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(tSize * 0.25, -tSize * 0.18, tSize * 0.16, 0, Math.PI * 2);
+    ctx.arc(tSize * 0.25, tSize * 0.18, tSize * 0.16, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Beaker potion flask in hand
+    ctx.fillStyle = '#22c55e'; // bubbling lime green acid
+    ctx.beginPath();
+    ctx.arc(tSize * 0.55, tSize * 0.45, tSize * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff'; // glass neck
+    ctx.fillRect(tSize * 0.45, tSize * 0.18, tSize * 0.2, tSize * 0.12);
+
+  } else if (tower.type === 'druid') {
+    // Druid (Brown fur, green leafy crown cloak, glowing nature yellow eyes)
+    ctx.rotate(angle);
+    ctx.fillStyle = '#15803d'; // Green foliage crown
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.2, 0, tSize * 1.0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#78350f'; // Dark woodsy fur
+    ctx.beginPath();
+    ctx.arc(-tSize * 0.3, 0, tSize * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Face skin
+    ctx.fillStyle = '#fdba74';
+    ctx.beginPath();
+    ctx.ellipse(tSize * 0.05, 0, tSize * 0.6, tSize * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing nature yellow eyes
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(tSize * 0.18, -tSize * 0.12, tSize * 0.1, 0, Math.PI * 2);
+    ctx.arc(tSize * 0.18, tSize * 0.12, tSize * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Branch thorn in hand
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(tSize * 0.3, tSize * 0.4);
+    ctx.lineTo(tSize * 0.75, tSize * 0.7);
+    ctx.stroke();
+
+  } else if (tower.type === 'farm') {
+    // Banana Farm: A cute wooden Cabin/Barn with a yellow bunch of Bananas on top
+    const wobble = Math.sin(Date.now() * 0.003) * 0.035;
+    ctx.rotate(wobble);
+
+    // Barn roof/structure
+    ctx.fillStyle = '#b45309'; // brown wood walls
+    ctx.fillRect(-tSize * 1.1, -tSize * 1.1, tSize * 2.2, tSize * 1.9);
+
+    ctx.fillStyle = '#dc2626'; // cute red barn roof
+    ctx.beginPath();
+    ctx.moveTo(-tSize * 1.3, -tSize * 1.1);
+    ctx.lineTo(0, -tSize * 1.85);
+    ctx.lineTo(tSize * 1.3, -tSize * 1.1);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cute green tree shrub details around it
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(-tSize * 1.0, tSize * 0.6, tSize * 0.5, 0, Math.PI * 2);
+    ctx.arc(tSize * 1.0, tSize * 0.6, tSize * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sweet Banana bunch sign inside!
+    ctx.fillStyle = '#facc15'; // banana bunch gold
+    ctx.beginPath();
+    ctx.arc(0, -tSize * 0.2, tSize * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#854d0e';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+  } else if (tower.type === 'sub') {
+    // Submarine: sleek yellow/blue capsule hull, a rotating periscope
+    ctx.rotate(angle);
+    ctx.fillStyle = '#0284c7'; // Sea blue water capsule
+    ctx.beginPath();
+    ctx.ellipse(0, 0, tSize * 1.6, tSize * 0.82, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Sub hatch/window dome
+    ctx.fillStyle = '#38bdf8'; // glossy sky-400 glass window
+    ctx.beginPath();
+    ctx.arc(tSize * 0.2, 0, tSize * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Sonar antenna/Periscope pointing towards target
+    ctx.fillStyle = '#ef4444'; // red tip
+    ctx.fillRect(-tSize * 0.6, -tSize * 0.15, tSize * 0.35, tSize * 0.3);
+
+  } else if (tower.type === 'buccaneer') {
+    // Buccaneer Ship: brown catamaran hull, white piracy sails, grape cannons
+    ctx.rotate(angle);
+    ctx.fillStyle = '#78350f'; // Dark ship deck wood
+    ctx.beginPath();
+    ctx.moveTo(-tSize * 1.6, -tSize * 0.85);
+    ctx.lineTo(tSize * 1.5, 0); // Pointy bow
+    ctx.lineTo(-tSize * 1.6, tSize * 0.85);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // White Sail in the center
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.ellipse(-tSize * 0.25, 0, tSize * 0.38, tSize * 0.65, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pirate skull detail logo
+    ctx.fillStyle = '#0f172a';
+    ctx.font = `bold ${Math.round(tSize * 0.4)}px sans-serif`;
+    ctx.fillText('☠', -tSize * 0.25, 0);
+
+  } else if (tower.type === 'pool') {
+    // Portable Water Pool: a beautifully tiled blue circle filled with peaceful animated water ripples
+    const pulseRadius = tSize * 1.6 + Math.sin(Date.now() * 0.003) * 2;
+    ctx.fillStyle = '#0284c7'; // pool blue ocean water depth
+    ctx.beginPath();
+    ctx.arc(0, 0, pulseRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Solid concrete gray tiled rim
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = tSize * 0.22;
+    ctx.stroke();
+
+    // Light blue water flow rings inside pool
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.4)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, pulseRadius * 0.62, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, pulseRadius * 0.35, 0, Math.PI * 2);
+    ctx.stroke();
   }
 
   // Visual Level / Tier badge details in the corner of physical placement
@@ -892,6 +1377,88 @@ export function drawProjectile(
     ctx.lineTo(12, -2);
     ctx.lineTo(6, 2);
     ctx.stroke();
+  } else if (proj.type === 'boomerang') {
+    // Rotating boomerang shape
+    const rotTime = (Date.now() / 120);
+    ctx.rotate(rotTime);
+    ctx.strokeStyle = '#fca5a5'; // reddish wood
+    ctx.fillStyle = '#f87171';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-10, -5);
+    ctx.quadraticCurveTo(0, -14, 12, -4);
+    ctx.quadraticCurveTo(0, -2, -10, -5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+  } else if (proj.type === 'shuriken') {
+    // Sharp rotating ninja star
+    const rotTime = (Date.now() / 45);
+    ctx.rotate(rotTime);
+    ctx.fillStyle = '#94a3b8'; // silver
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.lineTo(0, -9);
+      ctx.lineTo(2.5, -2.5);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // Center point
+    ctx.fillStyle = '#cbd5e1';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (proj.type === 'glue') {
+    // Gooey yellow acid glob
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.arc(-3, 1, 3, 0, Math.PI * 2);
+    ctx.arc(2.5, -2, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (proj.type === 'magic') {
+    // Glowing mystic mana ray
+    ctx.fillStyle = '#a78bfa'; // violet
+    ctx.beginPath();
+    ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#e9d5ff';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+  } else if (proj.type === 'potion') {
+    // Bubble potion beaker
+    ctx.fillStyle = '#a855f7'; // purple glass
+    ctx.fillRect(-3, -7, 6, 4);
+    ctx.fillStyle = '#22c55e'; // green liquid
+    ctx.beginPath();
+    ctx.arc(0, 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (proj.type === 'thorn') {
+    // Wooden spike needle
+    ctx.strokeStyle = '#854d0e'; // dark yellow wood
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(8, 0);
+    ctx.stroke();
+
+  } else if (proj.type === 'grape') {
+    // Purplish cluster shotgun grape pellet
+    ctx.fillStyle = '#818cf8'; // indigo-purple grape
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    // Tiny white highlight dot
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-1.5, -1.5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   ctx.restore();
