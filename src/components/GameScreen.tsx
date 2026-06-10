@@ -380,6 +380,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   // Wave spawn queues
   const spawnQueueRef = useRef<{ delay: number; type: string }[]>([]);
   const spawnTimerRef = useRef<number>(0);
+  const roundInProgressRef = useRef<boolean>(false);
 
   // Monkey pop counter updates mapping (for active pop-count panels syncing)
   const [triggerPopCountUpdate, setTriggerPopCountUpdate] = useState<number>(0);
@@ -527,6 +528,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
   const restartMatch = () => {
     setRound(1);
+    roundInProgressRef.current = false;
     setRoundInProgress(false);
     setAutoPlay(false);
     setTotalPopCount(0);
@@ -566,7 +568,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
   // Trigger Spawning round mechanism
   const startRound = () => {
-    if (roundInProgress) return;
+    if (roundInProgressRef.current) return;
     resumeAudio();
 
     // Compile spawn sequences procedurally mimicking real rounds
@@ -574,6 +576,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     spawnQueueRef.current = seq;
     spawnTimerRef.current = 0;
 
+    roundInProgressRef.current = true;
     setRoundInProgress(true);
   };
 
@@ -783,7 +786,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
       for (let step = 0; step < loopsRatio; step++) {
         // --- SECTION A: SPAWNING BLOCKS ---
-        if (roundInProgress) {
+        if (roundInProgressRef.current) {
           if (spawnQueueRef.current.length > 0) {
             spawnTimerRef.current -= 1;
             if (spawnTimerRef.current <= 0) {
@@ -833,6 +836,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           } else {
             // Check if all bloons are dead to close the round successfully!
             if (bloonsRef.current.length === 0) {
+              roundInProgressRef.current = false;
               setRoundInProgress(false);
               
               // Passive income from Banana Farms and Merchant Buccaneers
@@ -879,6 +883,30 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               if (totalFarmCash > 0) {
                 setCash((prev) => prev + totalFarmCash);
               }
+
+              // Level up placed heroes upon wave complete!
+              towersRef.current.forEach((t) => {
+                if (t.type === 'hero' && t.level < 20) {
+                  t.level += 1;
+                  t.range += 12;
+                  t.baseCooldown = Math.max(15, t.baseCooldown * 0.92);
+                  t.heroXp = 0;
+                  t.heroMaxXp = Math.round((t.heroMaxXp || 100) * 1.5);
+                  if (t.level % 3 === 0) {
+                    t.damage += 1;
+                  }
+                  
+                  floatingTextsRef.current.push({
+                    id: `hero_lv_${t.id}_${Date.now()}`,
+                    x: t.x,
+                    y: t.y - 20,
+                    text: `Hero Rank Up! LV ${t.level}`,
+                    color: '#fbbf24', // Yellow-500
+                    life: 55,
+                  });
+                  playLevelUp();
+                }
+              });
 
               // Give bonus Round end Cash!
               const bonus = difficulty === 'CHIMPS' ? 0 : 100 + round * 10;
@@ -1166,7 +1194,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   speed: 5,
                   damage: t.damage,
                   pierce: t.pierce,
-                  rangeRemaining: t.range,
+                  rangeRemaining: t.range * 1.8,
+                  originTowerId: t.id,
                   damageType: getTowerDamageType(t, heroType),
                   upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
@@ -1228,7 +1257,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   speed: 8.5,
                   damage: t.damage,
                   pierce: t.pierce,
-                  rangeRemaining: t.range,
+                  rangeRemaining: t.range * 2.0,
+                  originTowerId: t.id,
                   damageType: getTowerDamageType(t, heroType),
                   upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
@@ -1253,7 +1283,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   speed: 6.5,
                   damage: t.damage,
                   pierce: t.pierce,
-                  rangeRemaining: t.range,
+                  rangeRemaining: t.range * 2.0,
+                  originTowerId: t.id,
                   damageType: getTowerDamageType(t, heroType),
                   upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
@@ -1279,7 +1310,130 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   speed: 6.0,
                   damage: t.damage,
                   pierce: t.pierce,
-                  rangeRemaining: t.range,
+                  rangeRemaining: t.range * 2.0,
+                  originTowerId: t.id,
+                  damageType: getTowerDamageType(t, heroType),
+                  upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
+                });
+              }
+              t.cooldown = t.baseCooldown;
+              return;
+            }
+
+            // Dart Monkey Shooting Block
+            if (t.type === 'dart') {
+              playShoot();
+              const lv = t.upgradeLevels || [0, 0, 0];
+              
+              if (lv[1] >= 3) {
+                // Triple Shots or Fan Clubs fire 3 darts/beams at once!
+                const isPlasma = lv[1] >= 5;
+                const projType = isPlasma ? 'beam' : 'dart';
+                const damageMult = isPlasma ? 3 : 1;
+                const count = 3;
+                const spreadAngle = 0.12;
+
+                for (let i = 0; i < count; i++) {
+                  const offset = (i - 1) * spreadAngle;
+                  projectilesRef.current.push({
+                    id: `dart_${Date.now()}_${i}_${Math.random()}`,
+                    type: projType,
+                    x: t.x,
+                    y: t.y,
+                    vx: Math.cos(angle + offset) * (isPlasma ? 11.0 : 8.0),
+                    vy: Math.sin(angle + offset) * (isPlasma ? 11.0 : 8.0),
+                    speed: isPlasma ? 11.0 : 8.0,
+                    damage: t.damage * damageMult,
+                    pierce: t.pierce,
+                    rangeRemaining: t.range * 2.0,
+                    originTowerId: t.id,
+                    damageType: isPlasma ? 'plasma' : getTowerDamageType(t, heroType),
+                    upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
+                  });
+                }
+              } else {
+                // Standard single shot
+                // Check if Spiker or Crossbow Bolt
+                const isSpike = lv[0] >= 3;
+                const isCrossbow = lv[2] >= 3;
+                let speed = 7.5;
+                if (isCrossbow) speed = 9.5;
+                else if (isSpike) speed = 6.5;
+
+                projectilesRef.current.push({
+                  id: `dart_${Date.now()}_${Math.random()}`,
+                  type: 'dart',
+                  x: t.x,
+                  y: t.y,
+                  vx: Math.cos(angle) * speed,
+                  vy: Math.sin(angle) * speed,
+                  speed,
+                  damage: t.damage,
+                  pierce: t.pierce,
+                  rangeRemaining: t.range * 2.5,
+                  originTowerId: t.id,
+                  damageType: getTowerDamageType(t, heroType),
+                  upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
+                });
+              }
+
+              t.cooldown = t.baseCooldown;
+              return;
+            }
+
+            // Bomb / Cannon Shooting Block
+            if (t.type === 'bomb') {
+              playShoot();
+              const lv = t.upgradeLevels || [0, 0, 0];
+              const isMissile = lv[1] >= 2;
+              const speed = isMissile ? 9.5 : 5.5;
+              const splashRadiusBase = lv[0] >= 3 ? 85 : (lv[0] >= 1 ? 75 : 60);
+
+              projectilesRef.current.push({
+                id: `bomb_${Date.now()}_${Math.random()}`,
+                type: 'bomb',
+                x: t.x,
+                y: t.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                speed,
+                damage: t.damage,
+                pierce: t.pierce,
+                splashRadius: splashRadiusBase,
+                rangeRemaining: t.range * 2.5,
+                originTowerId: t.id,
+                damageType: getTowerDamageType(t, heroType),
+                upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
+              });
+
+              t.cooldown = t.baseCooldown;
+              return;
+            }
+
+            // Submarine Shooting Block
+            if (t.type === 'sub') {
+              playShoot();
+              const lv = t.upgradeLevels || [0, 0, 0];
+              let count = 1;
+              if (lv[2] >= 3) count = 3;      // Triple Guns
+              else if (lv[2] >= 1) count = 2; // Twin Guns
+
+              const spreadAngle = 0.10;
+              for (let i = 0; i < count; i++) {
+                const offset = (i - (count - 1) / 2) * spreadAngle;
+                projectilesRef.current.push({
+                  id: `sub_${Date.now()}_${i}_${Math.random()}`,
+                  type: 'dart',
+                  x: t.x,
+                  y: t.y,
+                  vx: Math.cos(angle + offset) * 8.0,
+                  vy: Math.sin(angle + offset) * 8.0,
+                  speed: 8.0,
+                  damage: t.damage,
+                  pierce: t.pierce,
+                  targetBloonId: target.id, // home on target
+                  rangeRemaining: t.range * 2.5,
+                  originTowerId: t.id,
                   damageType: getTowerDamageType(t, heroType),
                   upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
@@ -1341,7 +1495,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               pierce: t.pierce,
               splashRadius: splash,
               targetBloonId: (t.type === 'sub') ? target.id : undefined, // submarine uses homing
-              rangeRemaining: t.range,
+              rangeRemaining: t.range * 2.5,
+              originTowerId: t.id,
               damageType: getTowerDamageType(t, heroType),
               upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
             });
@@ -1425,9 +1580,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     });
                   }
                   // Dissolving acidic splash damage
-                  triggerExplosionSplash(p.x, p.y, p.splashRadius || 60, p.damage);
+                  triggerExplosionSplash(p.x, p.y, p.splashRadius || 60, p.damage, p.originTowerId, p.upgradeLevels);
                 } else {
-                  triggerExplosionSplash(p.x, p.y, p.splashRadius || 50, p.damage);
+                  triggerExplosionSplash(p.x, p.y, p.splashRadius || 50, p.damage, p.originTowerId, p.upgradeLevels);
                 }
 
                 projectilesRef.current.splice(pIdx, 1);
@@ -1456,7 +1611,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 const damageDealt = baseDmg * dmgMult;
                 
                 if (damageDealt > 0) {
-                  damageAndPopBloon(b, damageDealt);
+                  const originTower = p.originTowerId ? towersRef.current.find((t) => t.id === p.originTowerId) : undefined;
+                  damageAndPopBloon(b, damageDealt, originTower);
                 } else {
                   // Text warning immune
                   floatingTextsRef.current.push({
@@ -1775,7 +1931,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   };
 
   // Explosive bomb explosion damage sweep radius function
-  const triggerExplosionSplash = (ex: number, ey: number, rad: number, dmg: number) => {
+  const triggerExplosionSplash = (
+    ex: number,
+    ey: number,
+    rad: number,
+    dmg: number,
+    originTowerId?: string,
+    upgradeLevels?: [number, number, number]
+  ) => {
     // Spark & smoke particles
     for (let c = 0; c < 8; c++) {
       const angle = Math.random() * Math.PI * 2;
@@ -1806,14 +1969,75 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       type: 'smoke',
     });
 
+    const [top, mid, bot] = upgradeLevels || [0, 0, 0];
+
+    // Frag Bombs (bot === 2)
+    if (bot === 2) {
+      for (let i = 0; i < 8; i++) {
+        const angleFrag = (i * Math.PI) / 4;
+        projectilesRef.current.push({
+          id: `frag_${Date.now()}_${i}_${Math.random()}`,
+          type: 'tack',
+          x: ex,
+          y: ey,
+          vx: Math.cos(angleFrag) * 7.0,
+          vy: Math.sin(angleFrag) * 7.0,
+          speed: 7.0,
+          damage: 1,
+          pierce: 2,
+          rangeRemaining: 65,
+          originTowerId,
+          damageType: 'sharp',
+        });
+      }
+    }
+
+    // Cluster Bombs (bot >= 3)
+    if (bot >= 3) {
+      const clusterCount = bot >= 4 ? 8 : 4;
+      for (let i = 0; i < clusterCount; i++) {
+        const angleCluster = Math.random() * Math.PI * 2;
+        const speedCluster = Math.random() * 3.5 + 2.0;
+        projectilesRef.current.push({
+          id: `cluster_${Date.now()}_${i}_${Math.random()}`,
+          type: 'bomb',
+          x: ex,
+          y: ey,
+          vx: Math.cos(angleCluster) * speedCluster,
+          vy: Math.sin(angleCluster) * speedCluster,
+          speed: speedCluster,
+          damage: Math.max(1, Math.round(dmg * 0.5)),
+          pierce: 1,
+          splashRadius: 35,
+          rangeRemaining: Math.random() * 25 + 15,
+          originTowerId,
+          upgradeLevels: [top, mid, 0], // avoid infinite recursive clusters
+        });
+      }
+    }
+
     // Inflict splash damage on close targets with explosive immunities
+    const originTower = originTowerId ? towersRef.current.find((t) => t.id === originTowerId) : undefined;
     bloonsRef.current.forEach((b) => {
       const dist = Math.hypot(b.x - ex, b.y - ey);
       if (dist < rad) { // inside blast radius
         if (b.type === 'Black' || b.type === 'Zebra' || b.type === 'DDT') {
           return; // Immune to explosions!
         }
-        damageAndPopBloon(b, dmg);
+
+        // Bloon Impact or Bloon Crush stun
+        if (top >= 4 && b.type !== 'BAD') {
+          b.isFrozen = true;
+          b.freezeTimer = top >= 5 ? 140 : 65;
+        }
+
+        // MOAB Mauler heavy damage
+        let finalDmg = dmg;
+        if (b.isMoab && mid >= 3) {
+          finalDmg = mid === 3 ? dmg + 15 : mid === 4 ? dmg + 40 : dmg + 100;
+        }
+
+        damageAndPopBloon(b, finalDmg, originTower);
       }
     });
   };
@@ -2652,6 +2876,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                       setCash(1000000);
                       setLives(100000);
                       setRound(1);
+                      roundInProgressRef.current = false;
                       setRoundInProgress(false);
                       setSelectedShopTower(null);
                       setSelectedPlacedTowerId(null);

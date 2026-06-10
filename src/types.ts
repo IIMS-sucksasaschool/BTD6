@@ -91,6 +91,7 @@ export interface Projectile {
   damage: number;
   pierce: number;
   targetBloonId?: string; // for homing or direct hit
+  originTowerId?: string; // raw ID of the source tower
   splashRadius?: number;
   rangeRemaining: number; // disappear if too far
   damageType?: 'sharp' | 'explosive' | 'cold' | 'magic' | 'plasma' | 'acid' | 'normal';

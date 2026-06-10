@@ -882,112 +882,229 @@ export function generateWave(round: number): { delay: number; type: BloonType; i
     for (let i = 0; i < 3; i++) wave.push({ delay: 40, type: 'Yellow' }); // First high speed
   } else if (round < 15) {
     // Introduce Yellows and Pink rushes, and early Blacks/Whites
-    const yellowCount = (round - 10) * 5;
-    const greenCount = 12;
+    const yellowCount = (round - 10) * 3 + 2;
+    const greenCount = 10;
     for (let i = 0; i < greenCount; i++) wave.push({ delay: 20, type: 'Green' });
-    for (let i = 0; i < yellowCount; i++) wave.push({ delay: 18, type: 'Yellow' });
-    for (let i = 0; i < 4; i++) wave.push({ delay: 25, type: 'Pink' });
+    for (let i = 1; i <= yellowCount; i++) wave.push({ delay: 18, type: 'Yellow' });
+    for (let i = 0; i < 3; i++) wave.push({ delay: 25, type: 'Pink' });
     if (round >= 13) {
-      for (let i = 0; i < 5; i++) wave.push({ delay: 20, type: 'Black' });
-      for (let i = 0; i < 5; i++) wave.push({ delay: 20, type: 'White' });
+      for (let i = 0; i < 3; i++) wave.push({ delay: 20, type: 'Black' });
+      for (let i = 0; i < 3; i++) wave.push({ delay: 20, type: 'White' });
     }
   } else if (round === 15) {
-    // IMMUNITY TUTORIAL: Introduce Leads (sharp-immune) & Purples (magic-immune)
-    for (let i = 0; i < 10; i++) wave.push({ delay: 35, type: 'Lead' }); // Leads!
-    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Purple' }); // Purples!
+    // IMMUNITY TUTORIAL: Introduce Leads (sharp-immune) & Purples (magic-immune) gently
+    for (let i = 0; i < 4; i++) wave.push({ delay: 45, type: 'Lead' }); // Leads!
+    for (let i = 0; i < 4; i++) wave.push({ delay: 25, type: 'Purple' }); // Purples!
     for (let i = 0; i < 10; i++) wave.push({ delay: 20, type: 'Yellow' });
   } else if (round < 20) {
     // Lead + Purple rushes alongside standard blacks and whites
-    for (let i = 0; i < 8; i++) wave.push({ delay: 30, type: 'Lead' });
-    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Purple' });
-    for (let i = 0; i < 15; i++) wave.push({ delay: 12, type: 'Pink' });
+    for (let i = 0; i < 5; i++) wave.push({ delay: 35, type: 'Lead' });
+    for (let i = 0; i < 6; i++) wave.push({ delay: 22, type: 'Purple' });
+    for (let i = 0; i < 8; i++) wave.push({ delay: 15, type: 'Pink' });
   } else if (round === 20) {
     // INTRODUCING ZEBRAS (combined freeze + explosion immunities)
-    for (let i = 0; i < 15; i++) wave.push({ delay: 15, type: 'Zebra' });
-    for (let i = 0; i < 5; i++) wave.push({ delay: 25, type: 'Lead' });
-    for (let i = 0; i < 15; i++) wave.push({ delay: 8, type: 'Pink' });
+    for (let i = 0; i < 6; i++) wave.push({ delay: 20, type: 'Zebra' });
+    for (let i = 0; i < 3; i++) wave.push({ delay: 30, type: 'Lead' });
+    for (let i = 0; i < 6; i++) wave.push({ delay: 12, type: 'Pink' });
   } else if (round < 25) {
     // Introduces Camo (Crested) and Regrow properties!
     const multiplier = round - 20;
     // Camo Greens and Yellows
-    for (let i = 0; i < 8 * multiplier; i++) {
+    for (let i = 0; i < 3 * multiplier; i++) {
       wave.push({ delay: 20, type: 'Green', isCamo: true });
     }
     // Regrow Reds and Blues
-    for (let i = 0; i < 12 * multiplier; i++) {
+    for (let i = 0; i < 5 * multiplier; i++) {
       wave.push({ delay: 15, type: 'Blue', isRegrow: true });
     }
     // Mix in Zebras and Rainbows
-    for (let i = 0; i < 4 * multiplier; i++) {
+    for (let i = 0; i < 1 * multiplier + 1; i++) {
       wave.push({ delay: 25, type: 'Rainbow' });
     }
   } else if (round === 25) {
-    // First high-hp Ceremic bloon!
-    for (let i = 0; i < 20; i++) wave.push({ delay: 10, type: 'Pink' });
-    wave.push({ delay: 100, type: 'Ceramic' }); // Heavy shell!
-    for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Rainbow' });
+    // First high-hp Ceramic bloon!
+    for (let i = 0; i < 12; i++) wave.push({ delay: 12, type: 'Pink' });
+    wave.push({ delay: 120, type: 'Ceramic' }); // Heavy shell!
+    for (let i = 0; i < 4; i++) wave.push({ delay: 20, type: 'Rainbow' });
   } else if (round < 30) {
     // Rainbows, Zebras, and Fortified modifiers!
     const multiplier = round - 25;
-    for (let i = 0; i < 10; i++) {
-      wave.push({ delay: 20, type: 'Lead', isFortified: true }); // Steel-plated leads!
+    for (let i = 0; i < 4; i++) {
+      wave.push({ delay: 25, type: 'Lead', isFortified: true }); // Steel-plated leads!
     }
-    for (let i = 0; i < 8 * multiplier; i++) {
-      wave.push({ delay: 15, type: 'Rainbow', isRegrow: true });
+    for (let i = 0; i < 2 * multiplier; i++) {
+      wave.push({ delay: 20, type: 'Rainbow', isRegrow: true });
     }
-    for (let i = 0; i < 5 * multiplier; i++) {
-      wave.push({ delay: 25, type: 'Ceramic' });
+    const ceramicCount = Math.max(1, Math.floor(multiplier * 1.2));
+    for (let i = 0; i < ceramicCount; i++) {
+      wave.push({ delay: 40, type: 'Ceramic' });
     }
   } else if (round === 30) {
     // Rainbow Regrow Rush + Fortified Ceramics
-    for (let i = 0; i < 20; i++) wave.push({ delay: 8, type: 'Rainbow', isRegrow: true });
-    for (let i = 0; i < 3; i++) wave.push({ delay: 50, type: 'Ceramic', isFortified: true });
-    for (let i = 0; i < 12; i++) wave.push({ delay: 10, type: 'Pink', isCamo: true });
+    for (let i = 0; i < 10; i++) wave.push({ delay: 12, type: 'Rainbow', isRegrow: true });
+    for (let i = 0; i < 2; i++) wave.push({ delay: 60, type: 'Ceramic', isFortified: true });
+    for (let i = 0; i < 6; i++) wave.push({ delay: 15, type: 'Pink', isCamo: true });
   } else if (round < 40) {
     // Camo, Regrow, Fortified Ceramics and Rainbow clumps
-    const ceramicCount = (round - 30) * 2;
+    const ceramicCount = Math.floor((round - 30) * 1.1) + 1;
     for (let i = 0; i < ceramicCount; i++) {
-      wave.push({ delay: 40, type: 'Ceramic', isFortified: i % 2 === 0 });
+      wave.push({ delay: 45, type: 'Ceramic', isFortified: i % 2 === 0 });
     }
-    for (let i = 0; i < 15; i++) {
-      wave.push({ delay: 12, type: 'Rainbow', isCamo: true });
+    for (let i = 0; i < 8; i++) {
+      wave.push({ delay: 15, type: 'Rainbow', isCamo: true });
     }
-    for (let i = 0; i < 12; i++) {
-      wave.push({ delay: 15, type: 'Zebra', isRegrow: true });
+    for (let i = 0; i < 6; i++) {
+      wave.push({ delay: 20, type: 'Zebra', isRegrow: true });
     }
   } else if (round === 40) {
     // MOAB Wave (Mother of All Bloons BOSS)
-    for (let i = 0; i < 15; i++) wave.push({ delay: 15, type: 'Pink', isCamo: true });
-    for (let i = 0; i < 6; i++) wave.push({ delay: 40, type: 'Ceramic', isRegrow: true });
+    for (let i = 0; i < 8; i++) wave.push({ delay: 18, type: 'Pink', isCamo: true });
+    for (let i = 0; i < 3; i++) wave.push({ delay: 45, type: 'Ceramic', isRegrow: true });
     wave.push({ delay: 180, type: 'MOAB' }); // Boss blimp!
-  } else {
-    // Post-round 40 madness (Infinite play Scaling)
-    // Introduces BFB (42), DDT (45), ZOMG (50), and BAD (55)
-    const extra = round - 40;
-    
-    if (round === 42 || round === 43) {
-      wave.push({ delay: 120, type: 'BFB' });
-    } else if (round >= 45 && round < 50) {
-      // Sleek stealth DDT Blimps!
-      wave.push({ delay: 100, type: 'DDT' });
-      wave.push({ delay: 80, type: 'DDT' });
-    } else if (round === 50) {
-      // The colossal green ZOMG!
-      wave.push({ delay: 150, type: 'ZOMG' });
-    } else if (round === 55 || round % 10 === 5) {
-      // The massive Purple BAD Boss!
-      wave.push({ delay: 240, type: 'BAD' });
+  } else if (round <= 50) {
+    // Post-round 40 linear progression up to first BFB
+    // Intro to MOABs gradually (Rounds 41-50)
+    if (round === 41) {
+      for (let i = 0; i < 15; i++) wave.push({ delay: 15, type: 'Rainbow' });
+      for (let i = 0; i < 5; i++) wave.push({ delay: 35, type: 'Ceramic' });
+    } else if (round === 42) {
+      for (let i = 0; i < 10; i++) wave.push({ delay: 12, type: 'Rainbow', isRegrow: true });
+      for (let i = 0; i < 6; i++) wave.push({ delay: 30, type: 'Ceramic' });
+    } else if (round === 43) {
+      // Intro to stealth lead (Camo Leads) clumps
+      for (let i = 0; i < 6; i++) wave.push({ delay: 20, type: 'Lead', isCamo: true });
+      for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Rainbow' });
+      wave.push({ delay: 120, type: 'MOAB' });
+    } else if (round === 45) {
+      // Dual MOAB rush
+      for (let i = 0; i < 10; i++) wave.push({ delay: 15, type: 'Pink', isCamo: true });
+      wave.push({ delay: 100, type: 'MOAB' });
+      wave.push({ delay: 100, type: 'MOAB' });
     } else {
-      // Random boss scaling!
-      if (extra % 3 === 0) wave.push({ delay: 120, type: 'BFB' });
-      if (extra % 5 === 0) wave.push({ delay: 150, type: 'DDT' });
-      if (extra % 8 === 0) wave.push({ delay: 180, type: 'ZOMG' });
+      // Math-based smooth ramp-up for 44, 46, 47, 48, 49, 50
+      const mult = round - 40;
+      for (let i = 0; i < mult + 2; i++) {
+        wave.push({ delay: 35, type: 'Ceramic', isFortified: i % 2 === 0 });
+      }
+      for (let i = 0; i < 10; i++) {
+        wave.push({ delay: 15, type: 'Rainbow', isRegrow: true });
+      }
+      if (round >= 47) {
+        wave.push({ delay: 120, type: 'MOAB' });
+      }
+    }
+  } else if (round <= 60) {
+    // Leads up to first BFB at Round 60
+    if (round === 55) {
+      // Landmark wave: Triple MOAB challenge
+      for (let i = 0; i < 8; i++) wave.push({ delay: 15, type: 'Ceramic', isFortified: true });
       wave.push({ delay: 90, type: 'MOAB' });
+      wave.push({ delay: 90, type: 'MOAB' });
+      wave.push({ delay: 90, type: 'MOAB' });
+    } else if (round === 60) {
+      // Medium Final Boss: First BFB (Big Fat Bloon - 400 HP)!
+      for (let i = 0; i < 12; i++) wave.push({ delay: 15, type: 'Rainbow', isRegrow: true });
+      for (let i = 0; i < 4; i++) wave.push({ delay: 35, type: 'Ceramic', isFortified: true });
+      wave.push({ delay: 220, type: 'BFB' });
+    } else {
+      const mult = round - 50;
+      for (let i = 0; i < mult + 1; i++) {
+        wave.push({ delay: 30, type: 'Ceramic', isFortified: true });
+      }
+      wave.push({ delay: 100, type: 'MOAB' });
+      if (mult % 3 === 0) {
+        wave.push({ delay: 120, type: 'MOAB', isFortified: true });
+      }
+    }
+  } else if (round <= 80) {
+    // Leads up to first ZOMG at Round 80
+    if (round === 63) {
+      // Iconic Round 63: 3 extreme density ceramic batches
+      for (let i = 0; i < 30; i++) wave.push({ delay: 4, type: 'Lead' });
+      for (let i = 0; i < 25; i++) wave.push({ delay: 6, type: 'Ceramic' });
+      for (let i = 0; i < 20; i++) wave.push({ delay: 8, type: 'Rainbow', isRegrow: true });
+      for (let i = 0; i < 25; i++) wave.push({ delay: 6, type: 'Ceramic' });
+    } else if (round === 70) {
+      // Multi-BFB block
+      wave.push({ delay: 100, type: 'BFB' });
+      wave.push({ delay: 100, type: 'BFB' });
+      for (let i = 0; i < 3; i++) wave.push({ delay: 70, type: 'MOAB' });
+    } else if (round === 78) {
+      // Iconic Round 78: Big Camo-Regrow Rainbow rush followed by nested ceramics
+      for (let i = 0; i < 45; i++) wave.push({ delay: 5, type: 'Rainbow', isRegrow: true, isCamo: true });
+      for (let i = 0; i < 15; i++) wave.push({ delay: 12, type: 'Ceramic' });
+      wave.push({ delay: 120, type: 'BFB' });
+    } else if (round === 80) {
+      // Hard Final Boss: First ZOMG (Zeppelin Of Mighty Gargantuaness - 800 HP)!
+      for (let i = 0; i < 4; i++) wave.push({ delay: 60, type: 'MOAB' });
+      wave.push({ delay: 250, type: 'ZOMG' });
+    } else {
+      // Steady flow of MOABs and BFBs
+      const mult = round - 60;
+      if (mult % 4 === 0) {
+        wave.push({ delay: 150, type: 'BFB' });
+      } else {
+        wave.push({ delay: 100, type: 'MOAB', isFortified: true });
+        wave.push({ delay: 110, type: 'MOAB' });
+      }
+      for (let i = 0; i < 5; i++) wave.push({ delay: 25, type: 'Ceramic', isFortified: true });
+    }
+  } else if (round <= 100) {
+    // Leads up to first BAD at Round 100
+    if (round === 90) {
+      // Intro to DDT (Dark Dirigible Titan: 150 HP, speed 3.2, lead and camo properties)!
+      for (let i = 0; i < 15; i++) wave.push({ delay: 12, type: 'Lead', isCamo: true });
+      wave.push({ delay: 80, type: 'DDT' });
+      wave.push({ delay: 80, type: 'DDT' });
+      wave.push({ delay: 80, type: 'DDT' });
+    } else if (round === 95) {
+      // Landmark wave 95: Mass DDT rush! Excellent challenge for Camo/Lead piercing!
+      for (let i = 0; i < 30; i++) wave.push({ delay: 6, type: 'Purple', isCamo: true });
+      for (let i = 0; i < 6; i++) wave.push({ delay: 50, type: 'DDT' });
+    } else if (round === 98) {
+      // Iconic Wave 98: Colossal density of BFBs and ZOMGs
+      for (let i = 0; i < 8; i++) wave.push({ delay: 45, type: 'BFB' });
+      wave.push({ delay: 120, type: 'ZOMG' });
+      wave.push({ delay: 120, type: 'ZOMG' });
+    } else if (round === 99) {
+      // Fortified DDTs right before the boss!
+      wave.push({ delay: 60, type: 'DDT', isFortified: true });
+      wave.push({ delay: 60, type: 'DDT', isFortified: true });
+    } else if (round === 100) {
+      // CHIMPS Final Boss: The BAD (Big Airship of Doom: 1500 HP)!
+      wave.push({ delay: 120, type: 'ZOMG' });
+      wave.push({ delay: 120, type: 'ZOMG' });
+      wave.push({ delay: 300, type: 'BAD' });
+    } else {
+      const mult = round - 80;
+      if (mult % 5 === 0) {
+        wave.push({ delay: 140, type: 'ZOMG' });
+      } else if (mult % 3 === 0) {
+        wave.push({ delay: 100, type: 'BFB', isFortified: true });
+        wave.push({ delay: 90, type: 'DDT' });
+      } else {
+        wave.push({ delay: 80, type: 'MOAB', isFortified: true });
+        wave.push({ delay: 80, type: 'MOAB', isFortified: true });
+      }
+    }
+  } else {
+    // Post-round 100 infinite play Scaling
+    const extra = round - 100;
+    
+    if (extra % 10 === 0) {
+      wave.push({ delay: 300, type: 'BAD' });
+    } else if (extra % 5 === 0) {
+      wave.push({ delay: 180, type: 'ZOMG' });
+      wave.push({ delay: 140, type: 'DDT' });
+    } else {
+      wave.push({ delay: 120, type: 'BFB', isFortified: true });
+      wave.push({ delay: 100, type: 'DDT' });
+      wave.push({ delay: 90, type: 'MOAB', isFortified: true });
     }
 
-    const ceramicCount = Math.min(25, 5 + extra);
+    const ceramicCount = Math.min(25, 5 + Math.floor(extra / 2));
     for (let i = 0; i < ceramicCount; i++) {
-      wave.push({ delay: 35, type: 'Ceramic', isFortified: i % 3 === 0 });
+      wave.push({ delay: 35, type: 'Ceramic', isFortified: i % 2 === 0 });
     }
     for (let i = 0; i < 20; i++) {
       wave.push({ delay: 12, type: 'Rainbow', isRegrow: true });
