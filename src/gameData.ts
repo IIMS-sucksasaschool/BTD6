@@ -712,6 +712,178 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     basePierce: 0,
     description: 'Portable Water Pool. Creates a custom water surface on land allowing water monkeys to be placed anywhere.',
     upgrades: [[], [], []]
+  },
+  ace: {
+    cost: 800,
+    baseRange: 9999,
+    baseCooldown: 45,
+    baseDamage: 1,
+    basePierce: 4,
+    description: 'Patrols the sky, firing dart streams in circular patrolled patterns.',
+    upgrades: [
+      [
+        { id: 'ace_t1', name: 'Rapid Fire', cost: 150, description: 'Increases dart firing speed.', effects: { cooldownMult: 0.75 } },
+        { id: 'ace_t2', name: 'Lots More Darts', cost: 350, description: 'Shoots double streams of darts.', effects: { pierce: 2, cooldownMult: 0.6 } }
+      ],
+      [
+        { id: 'ace_m1', name: 'Spy Plane', cost: 200, description: 'Fitted with advanced night-vision sensors.', effects: { canSeeCamo: true } }
+      ],
+      [
+        { id: 'ace_b1', name: 'Exploding Pineapple', cost: 300, description: 'Drops explosive pineapples periodically.', effects: { damage: 1, pierce: 3 } }
+      ]
+    ]
+  },
+  heli: {
+    cost: 1200,
+    baseRange: 220,
+    baseCooldown: 35,
+    baseDamage: 1,
+    basePierce: 3,
+    description: 'Shover and pursuit helicopter firing twin rapid darts.',
+    upgrades: [
+      [
+        { id: 'heli_t1', name: 'Quad Dash', cost: 250, description: 'Fires quad darts instead of twins.', effects: { pierce: 2 } }
+      ],
+      [
+        { id: 'heli_m1', name: 'Pursuit Guidance', cost: 400, description: 'Allows smart automated target pursuing.', effects: { range: 50 } }
+      ],
+      [
+        { id: 'heli_b1', name: 'IFR Cabin Sensors', cost: 250, description: 'Reveals camouflaged bloons.', effects: { canSeeCamo: true } }
+      ]
+    ]
+  },
+  mortar: {
+    cost: 750,
+    baseRange: 9999,
+    baseCooldown: 85,
+    baseDamage: 2,
+    basePierce: 15,
+    description: 'Mortar team bombarding a localized track zone with explosive fire.',
+    upgrades: [
+      [
+        { id: 'mortar_t1', name: 'Bigger Bombs', cost: 200, description: 'Increases splash explosion radius.', effects: { splashRadius: 20 } }
+      ],
+      [
+        { id: 'mortar_m1', name: 'Rapid Blast', cost: 250, description: 'Reloads and aligns rapidly.', effects: { cooldownMult: 0.7 } }
+      ],
+      [
+        { id: 'mortar_b1', name: 'Signal Flare', cost: 500, description: 'Reveals and decamos any hit targets.', effects: { canSeeCamo: true } }
+      ]
+    ]
+  },
+  dartling: {
+    cost: 850,
+    baseRange: 9999,
+    baseCooldown: 12,
+    baseDamage: 1,
+    basePierce: 2,
+    description: 'Hyper rapid needle shooter aiming in the direction of the cursor.',
+    upgrades: [
+      [
+        { id: 'dartling_t1', name: 'Focused Laser', cost: 300, description: 'Fires focused laser shots.', effects: { pierce: 3 } }
+      ],
+      [
+        { id: 'dartling_m1', name: 'Faster Barrel Spin', cost: 150, description: 'Increases needle speed and recoil rate.', effects: { cooldownMult: 0.75 } }
+      ],
+      [
+        { id: 'dartling_b1', name: 'Depleted Bloontonium', cost: 350, description: 'Hits lead bloons easily.', effects: { damage: 1 } }
+      ]
+    ]
+  },
+  spike: {
+    cost: 1000,
+    baseRange: 90,
+    baseCooldown: 60,
+    baseDamage: 1,
+    basePierce: 8,
+    description: 'Drops rows of durable metallic spike traps on the track near itself.',
+    upgrades: [
+      [
+        { id: 'spike_t1', name: 'Long Life Spikes', cost: 200, description: 'Spikes last through the full wave round.', effects: { range: 20 } }
+      ],
+      [
+        { id: 'spike_m1', name: 'Faster Spikes Production', cost: 300, description: 'Assembles spike traps at high speeds.', effects: { cooldownMult: 0.65 } }
+      ],
+      [
+        { id: 'spike_b1', name: 'White Hot Spikes', cost: 255, description: 'Can easily pop lead and ceramic layers.', effects: { damage: 1 } }
+      ]
+    ]
+  },
+  village: {
+    cost: 1200,
+    baseRange: 180,
+    baseCooldown: 99999,
+    baseDamage: 0,
+    basePierce: 0,
+    description: 'Increases Range and applies solid upgrade and placement discounts to nearby monkeys.',
+    upgrades: [
+      [
+        { id: 'village_t1', name: 'Grow Fertilizer', cost: 350, description: 'Increases crop yield of nearby farms.', effects: { range: 30 } }
+      ],
+      [
+        { id: 'village_m1', name: 'Radar Scanner', cost: 800, description: 'All monkeys in range can hit and detect Camo.', effects: { canSeeCamo: true } }
+      ],
+      [
+        { id: 'village_b1', name: 'Monkey Business Discount', cost: 400, description: 'Vastly reduces monkey base cost.', effects: { range: 20 } }
+      ]
+    ]
+  },
+  engineer: {
+    cost: 450,
+    baseRange: 130,
+    baseCooldown: 45,
+    baseDamage: 1,
+    basePierce: 3,
+    description: 'A handy specialized architect who deploys auxiliary automatic sentry guns.',
+    upgrades: [
+      [
+        { id: 'engineer_t1', name: 'Sentry Expert', cost: 400, description: 'Sentries fire specialty explosive and freeze pins.', effects: { range: 35 } }
+      ],
+      [
+        { id: 'engineer_m1', name: 'Hyper-clock Override', cost: 600, description: 'Buffs self and sentries to fire faster.', effects: { cooldownMult: 0.6 } }
+      ],
+      [
+        { id: 'engineer_b1', name: 'Deconstructions', cost: 250, description: 'Increased damage specifically vs camo and lead.', effects: { canSeeCamo: true } }
+      ]
+    ]
+  },
+  beast: {
+    cost: 700,
+    baseRange: 150,
+    baseCooldown: 50,
+    baseDamage: 3,
+    basePierce: 4,
+    description: 'Commands a companion wild dinosaur that chomps raw layers near the coordinates.',
+    upgrades: [
+      [
+        { id: 'beast_t1', name: 'Megalodon Might', cost: 600, description: 'Unleashes aquatic beasts to slice through targets.', effects: { damage: 4 } }
+      ],
+      [
+        { id: 'beast_m1', name: 'Giganotosaurus Roar', cost: 950, description: 'Massive chomps that stun and tear.', effects: { damage: 8, pierce: 3 } }
+      ],
+      [
+        { id: 'beast_b1', name: 'Pouakai Ascent', cost: 500, description: 'Falcon intercepts and carries away bloons.', effects: { range: 45 } }
+      ]
+    ]
+  },
+  mermonkey: {
+    cost: 600,
+    baseRange: 165,
+    baseCooldown: 40,
+    baseDamage: 2,
+    basePierce: 5,
+    description: 'Aquatic trident general that uses sonar resonance waves to pop and slow down bloons.',
+    upgrades: [
+      [
+        { id: 'merm_t1', name: 'Abyssal Gaze', cost: 300, description: 'Sonar pulses freeze target layers.', effects: { damage: 1, freezeTime: 12 } }
+      ],
+      [
+        { id: 'merm_m1', name: 'Symphonic Concord', cost: 400, description: 'Fires double sonic currents in waves.', effects: { cooldownMult: 0.7 } }
+      ],
+      [
+        { id: 'merm_b1', name: 'Riptide Pull', cost: 350, description: 'Vents currents to siphon camo status off bloons.', effects: { canSeeCamo: true } }
+      ]
+    ]
   }
 };
 

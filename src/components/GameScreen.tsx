@@ -11,6 +11,7 @@ import {
   drawFloatingText,
   drawRangeIndicator,
 } from '../canvasDrawer';
+import Peer from 'peerjs';
 import {
   playPop,
   playShoot,
@@ -71,7 +72,7 @@ interface GameScreenProps {
   mapId: string;
   heroType: string;
   difficulty: Difficulty;
-  gameMode: 'campaign' | 'endless' | 'sandbox';
+  gameMode: 'campaign' | 'endless' | 'sandbox' | 'battles2';
   startingCashBonus: number;
   discountPercent: number;
   extraLivesBonus: number;
@@ -263,6 +264,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
   // Canvas Refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const opponentCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Core Game State Variables
@@ -382,11 +384,62 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const spawnTimerRef = useRef<number>(0);
   const roundInProgressRef = useRef<boolean>(false);
 
+  // --- BATTLES 2 STATE & REFS ---
+  const [battlesEco, setBattlesEco] = useState<number>(250);
+  const [battlesOpponentEco, setBattlesOpponentEco] = useState<number>(250);
+  const [battlesOpponentCash, setBattlesOpponentCash] = useState<number>(650);
+  const [battlesOpponentLives, setBattlesOpponentLives] = useState<number>(150);
+
+  const [battlesPeerId, setBattlesPeerId] = useState<string>('');
+  const [battlesJoinCode, setBattlesJoinCode] = useState<string>('');
+  const [isMultiplayerConnected, setIsMultiplayerConnected] = useState<boolean>(false);
+  const [mpRole, setMpRole] = useState<'host' | 'client' | null>(null);
+
+  const battlesEcoRef = useRef<number>(250);
+  const battlesOpponentEcoRef = useRef<number>(250);
+  const battlesOpponentCashRef = useRef<number>(650);
+  const battlesOpponentLivesRef = useRef<number>(150);
+
+  const battlesOpponentTowersRef = useRef<Tower[]>([]);
+  const battlesOpponentBloonsRef = useRef<Bloon[]>([]);
+  const battlesOpponentProjectilesRef = useRef<Projectile[]>([]);
+  const battlesOpponentParticlesRef = useRef<Part[]>([]);
+  const battlesOpponentFloatingTextsRef = useRef<FloatingText[]>([]);
+
+  const peerRef = useRef<any>(null);
+  const connRef = useRef<any>(null);
+
   // Monkey pop counter updates mapping (for active pop-count panels syncing)
   const [triggerPopCountUpdate, setTriggerPopCountUpdate] = useState<number>(0);
 
   // Game active state loop key
   const [isGameOverOrFinished, setIsGameOverOrFinished] = useState<boolean>(false);
+
+  // Sync refs to avoid breaking standard RAF loops
+  const roundRef = useRef<number>(round);
+  const selectedShopTowerRef = useRef<TowerType | null>(selectedShopTower);
+  const mousePosRef = useRef<{ x: number; y: number }>(mousePos);
+  const speedMultiplierRef = useRef<number>(speedMultiplier);
+  const isGameOverOrFinishedRef = useRef<boolean>(isGameOverOrFinished);
+  const showVictoryModalRef = useRef<boolean>(showVictoryModal);
+  const gameModeRef = useRef<string>(gameMode);
+  const freePlayActiveRef = useRef<boolean>(freePlayActive);
+  const heroTypeRef = useRef<string>(heroType);
+
+  useEffect(() => { roundRef.current = round; }, [round]);
+  useEffect(() => { selectedShopTowerRef.current = selectedShopTower; }, [selectedShopTower]);
+  useEffect(() => { mousePosRef.current = mousePos; }, [mousePos]);
+  useEffect(() => { speedMultiplierRef.current = speedMultiplier; }, [speedMultiplier]);
+  useEffect(() => { isGameOverOrFinishedRef.current = isGameOverOrFinished; }, [isGameOverOrFinished]);
+  useEffect(() => { showVictoryModalRef.current = showVictoryModal; }, [showVictoryModal]);
+  useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+  useEffect(() => { freePlayActiveRef.current = freePlayActive; }, [freePlayActive]);
+  useEffect(() => { heroTypeRef.current = heroType; }, [heroType]);
+
+  useEffect(() => { battlesEcoRef.current = battlesEco; }, [battlesEco]);
+  useEffect(() => { battlesOpponentEcoRef.current = battlesOpponentEco; }, [battlesOpponentEco]);
+  useEffect(() => { battlesOpponentCashRef.current = battlesOpponentCash; }, [battlesOpponentCash]);
+  useEffect(() => { battlesOpponentLivesRef.current = battlesOpponentLives; }, [battlesOpponentLives]);
 
   // Handle resizing accurately
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -420,6 +473,142 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setTimeout(handleResize, 100);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // --- BATTLES 2 MP HELPERS ---
+  const startBattlesHost = () => {
+    try {
+      const pin = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit PIN
+      const peerId = `btd-battles-${pin}`;
+      const peer = new Peer(peerId);
+      peerRef.current = peer;
+      setMpRole('host');
+
+      peer.on('open', () => {
+        setBattlesPeerId(pin);
+        console.log('Peer Host setup complete, PIN:', pin);
+      });
+
+      peer.on('connection', (connection) => {
+        connRef.current = connection;
+        setIsMultiplayerConnected(true);
+        setupConnectionHandlers(connection);
+      });
+
+      peer.on('error', (err) => {
+        console.error('Peer Host Error:', err);
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const joinBattlesRoom = (code: string) => {
+    try {
+      const pin = code.trim();
+      const peerId = `btd-battles-join-${Math.floor(1000 + Math.random() * 9000)}`;
+      const peer = new Peer(peerId);
+      peerRef.current = peer;
+      setMpRole('client');
+
+      peer.on('open', () => {
+        console.log('Guest peer opened, connecting to host:', pin);
+        const connection = peer.connect(`btd-battles-${pin}`);
+        connRef.current = connection;
+        setIsMultiplayerConnected(true);
+        setupConnectionHandlers(connection);
+      });
+
+      peer.on('error', (err) => {
+        console.error('Peer Guest Error:', err);
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const setupConnectionHandlers = (connection: any) => {
+    connection.on('data', (data: any) => {
+      if (!data) return;
+      console.log('MP Data received:', data);
+
+      if (data.type === 'place') {
+        battlesOpponentTowersRef.current.push(data.tower);
+      } else if (data.type === 'upgrade') {
+        const t = battlesOpponentTowersRef.current.find((x) => x.id === data.towerId);
+        if (t) {
+          t.upgradeLevels = data.upgradeLevels;
+          t.damage = data.damage;
+          t.range = data.range;
+          t.baseCooldown = data.baseCooldown;
+        }
+      } else if (data.type === 'sell') {
+        battlesOpponentTowersRef.current = battlesOpponentTowersRef.current.filter((x) => x.id !== data.towerId);
+      } else if (data.type === 'send-bloon') {
+        // Spawn sent bloon at our spawning queue
+        spawnQueueRef.current.push({ delay: 5, type: data.bloonType });
+      } else if (data.type === 'state') {
+        setBattlesOpponentLives(data.lives);
+        setBattlesOpponentCash(data.cash);
+        setBattlesOpponentEco(data.eco);
+        battlesOpponentEcoRef.current = data.eco;
+        battlesOpponentCashRef.current = data.cash;
+        battlesOpponentLivesRef.current = data.lives;
+      }
+    });
+
+    connection.on('close', () => {
+      setIsMultiplayerConnected(false);
+    });
+  };
+
+  const sendBloonToOpponent = (bloonType: string) => {
+    const ecoCost = bloonType === 'MOAB' ? 300 : bloonType === 'Ceramic' ? 150 : bloonType === 'Rainbow' ? 80 : bloonType === 'Yellow' ? 45 : 20;
+    const ecoAdd = bloonType === 'MOAB' ? 6 : bloonType === 'Ceramic' ? 4.5 : bloonType === 'Rainbow' ? 2.5 : bloonType === 'Yellow' ? 1.5 : 1.0;
+
+    if (cash >= ecoCost) {
+      setCash((c) => c - ecoCost);
+      setBattlesEco((e) => e + ecoAdd);
+
+      if (isMultiplayerConnected && connRef.current) {
+        connRef.current.send({
+          type: 'send-bloon',
+          bloonType: bloonType
+        });
+      } else {
+        // Offline / AI Battles: Simply queue it on the simulated opponent's side!
+        const bSpeed = bloonType === 'MOAB' ? 1.5 : bloonType === 'Ceramic' ? 2.5 : bloonType === 'Rainbow' ? 3.0 : bloonType === 'Yellow' ? 3.5 : 2.0;
+        const bHp = bloonType === 'MOAB' ? 200 : bloonType === 'Ceramic' ? 45 : bloonType === 'Rainbow' ? 12 : bloonType === 'Yellow' ? 4 : 1;
+        const bSize = bloonType === 'MOAB' ? 35 : bloonType === 'Ceramic' ? 22 : bloonType === 'Rainbow' ? 18 : bloonType === 'Yellow' ? 14 : 12;
+        const bReward = bloonType === 'MOAB' ? 60 : bloonType === 'Ceramic' ? 25 : bloonType === 'Rainbow' ? 10 : bloonType === 'Yellow' ? 4 : 1;
+        const bColor = bloonType === 'MOAB' ? '#38bdf8' : bloonType === 'Ceramic' ? '#a1a1aa' : bloonType === 'Rainbow' ? '#f472b6' : bloonType === 'Yellow' ? '#facc15' : '#ef4444';
+
+        const newBloon: Bloon = {
+          id: `opp_b_${Date.now()}_${Math.random()}`,
+          type: bloonType as any,
+          x: selectedMap.track[0].x,
+          y: selectedMap.track[0].y,
+          speed: bSpeed,
+          hp: bHp,
+          maxHp: bHp,
+          reward: bReward,
+          size: bSize,
+          color: bColor,
+          pathSegmentIndex: 0,
+          segmentProgress: 0,
+          distanceTraversed: 0,
+          isCamo: false,
+          isRegrow: false,
+          isFrozen: false,
+          isSlowed: false,
+          freezeTimer: 0,
+          slowTimer: 0,
+          isCeramic: bloonType === 'Ceramic',
+          isMoab: bloonType === 'MOAB'
+        };
+        battlesOpponentBloonsRef.current.push(newBloon);
+      }
+    }
+  };
 
   // Sync volume controller
   const handleToggleMute = () => {
@@ -772,7 +961,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     const gameTick = () => {
       const canvas = canvasRef.current;
-      if (!canvas || isGameOverOrFinished) return;
+      if (!canvas || isGameOverOrFinishedRef.current) return;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -782,7 +971,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
       // Fast forward speed loops are computed by repeating update loops inside each single frames loop!
       // This increases performance without lag!
-      const loopsRatio = speedMultiplier;
+      const loopsRatio = speedMultiplierRef.current;
 
       for (let step = 0; step < loopsRatio; step++) {
         // --- SECTION A: SPAWNING BLOCKS ---
@@ -801,7 +990,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 else if (difficulty === 'Hard' || difficulty === 'CHIMPS') speedMultiplierByDiff = 1.15;
 
                 // Fortified double-hp modifier
-                const lateScale = getLateGameMultiplier(round);
+                const lateScale = getLateGameMultiplier(roundRef.current);
                 const initialHp = (item.isFortified ? (item.type === 'Lead' ? spec.hp * 4 : spec.hp * 2) : spec.hp) * lateScale.hp;
 
                 const inst: Bloon = {
@@ -909,7 +1098,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               });
 
               // Give bonus Round end Cash!
-              const bonus = difficulty === 'CHIMPS' ? 0 : 100 + round * 10;
+              const bonus = difficulty === 'CHIMPS' ? 0 : 100 + roundRef.current * 10;
               if (bonus > 0) {
                 setCash((prev) => prev + bonus);
               }
@@ -918,15 +1107,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 id: `ft_end_${Date.now()}`,
                 x: 500,
                 y: 500,
-                text: difficulty === 'CHIMPS' ? `Wave ${round} Complete!` : `Round Completed! Bonus +$${bonus}`,
+                text: difficulty === 'CHIMPS' ? `Wave ${roundRef.current} Complete!` : `Round Completed! Bonus +$${bonus}`,
                 color: '#10b981', // Clean Emerald Green
                 life: 60,
               });
 
-              assessmentRoundCompletes(round);
+              assessmentRoundCompletes(roundRef.current);
 
               // Campaign ends at maxRounds; if completed, trigger victory dialog before transitioning to free play
-              if (round === maxRounds && gameMode === 'campaign' && !freePlayActive) {
+              if (roundRef.current === maxRounds && gameModeRef.current === 'campaign' && !freePlayActiveRef.current) {
                 setShowVictoryModal(true);
               } else {
                 setRound((r) => r + 1);
@@ -1041,14 +1230,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           } else {
             // Leakage! Bloon has fully traversed the track list and escaped
             const leakDamage = b.isMoab ? 40 : b.maxHp;
-            if (gameMode !== 'sandbox') {
+            if (gameModeRef.current !== 'sandbox') {
               setLives((curr) => {
                 const remaining = curr - leakDamage;
                 if (remaining <= 0) {
                   // Defeat triggered!
                   setIsGameOverOrFinished(true);
-                  assessAchievementProgress('round_40', round); // track round max on fail as progress
-                  onGameOver(round - 1, Math.min(600, round * 12), totalPopCount);
+                  assessAchievementProgress('round_40', roundRef.current); // track round max on fail as progress
+                  onGameOver(roundRef.current - 1, Math.min(600, roundRef.current * 12), totalPopCount);
                   return 0;
                 }
                 return remaining;
@@ -1646,6 +1835,277 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           }
         }
 
+        // --- BATTLES 2 IN-FLIGHT SIMULATION ---
+        if (gameModeRef.current === 'battles2' && !isGameOverOrFinishedRef.current) {
+          // A: Spawning Opponent Queue entries
+          if (battlesOpponentBloonsRef.current.length < 40) { // Limit max bloons on screen for clean performance
+            // We can spawn any queued AI or partner bloons
+          }
+
+          // B: Eco payouts (every 360 frames)
+          if (framesCounter > 0 && framesCounter % 360 === 0) {
+            setCash((c) => c + battlesEcoRef.current);
+            setBattlesOpponentCash((c) => {
+              const next = c + battlesOpponentEcoRef.current;
+              battlesOpponentCashRef.current = next;
+              return next;
+            });
+            floatingTextsRef.current.push({
+              id: `eco_${Date.now()}`,
+              x: 500,
+              y: 400,
+              text: `+$${battlesEcoRef.current} ECO`,
+              color: '#10b981',
+              life: 45
+            });
+            battlesOpponentFloatingTextsRef.current.push({
+              id: `opp_eco_${Date.now()}`,
+              x: 500,
+              y: 400,
+              text: `+$${battlesOpponentEcoRef.current} ECO`,
+              color: '#10b981',
+              life: 45
+            });
+
+            // If Peer connected, let's sync state over connection
+            if (isMultiplayerConnected && connRef.current) {
+              connRef.current.send({
+                type: 'state',
+                lives: lives,
+                cash: cash,
+                eco: battlesEcoRef.current
+              });
+            }
+          }
+
+          // C: Opponent Bloons updates
+          const oBloons = battlesOpponentBloonsRef.current;
+          for (let i = oBloons.length - 1; i >= 0; i--) {
+            const b = oBloons[i];
+            let activeSpeed = b.speed;
+            if (b.isFrozen) activeSpeed = 0;
+            else if (b.isSlowed) activeSpeed *= 0.5;
+
+            const nextSegmentIdx = b.pathSegmentIndex + 1;
+            if (nextSegmentIdx < selectedMap.track.length) {
+              const startPt = selectedMap.track[b.pathSegmentIndex];
+              const endPt = selectedMap.track[nextSegmentIdx];
+              const segmentDist = Math.hypot(endPt.x - startPt.x, endPt.y - startPt.y);
+
+              const stepRatio = activeSpeed / segmentDist;
+              b.segmentProgress += stepRatio;
+              b.distanceTraversed += activeSpeed;
+
+              if (b.segmentProgress >= 1.0) {
+                b.pathSegmentIndex += 1;
+                b.segmentProgress = 0.0;
+              } else {
+                b.x = startPt.x + b.segmentProgress * (endPt.x - startPt.x);
+                b.y = startPt.y + b.segmentProgress * (endPt.y - startPt.y);
+              }
+            } else {
+              // Opponent leaks!
+              const leakDamage = b.isMoab ? 40 : b.maxHp;
+              oBloons.splice(i, 1);
+
+              setBattlesOpponentLives((curr) => {
+                const next = curr - leakDamage;
+                if (next <= 0) {
+                  setIsGameOverOrFinished(true);
+                  setShowVictoryModal(true); // Victory!
+                  return 0;
+                }
+                return next;
+              });
+
+              battlesOpponentFloatingTextsRef.current.push({
+                id: `opp_leak_${Date.now()}_${Math.random()}`,
+                x: 500,
+                y: 500,
+                text: `-${leakDamage} Shield Leak!`,
+                color: '#f87171',
+                life: 45
+              });
+            }
+          }
+
+          // D: Opponent Towers weapon cool-downs and shooting
+          battlesOpponentTowersRef.current.forEach((t) => {
+            if (t.cooldown > 0) t.cooldown--;
+            if (oBloons.length === 0) return;
+
+            // Target nearest/first
+            const target = oBloons[0];
+            const rangeDist = Math.hypot(target.x - t.x, target.y - t.y);
+            if (rangeDist <= t.range && t.cooldown <= 0) {
+              t.cooldown = t.baseCooldown;
+              t.lastAngle = Math.atan2(target.y - t.y, target.x - t.x);
+
+              const dx = target.x - t.x;
+              const dy = target.y - t.y;
+              const angle = Math.atan2(dy, dx);
+
+              // Spawn bullet trace
+              battlesOpponentProjectilesRef.current.push({
+                id: `opp_p_${Date.now()}_${Math.random()}`,
+                type: 'dart',
+                x: t.x + Math.cos(angle) * 15,
+                y: t.y + Math.sin(angle) * 15,
+                vx: Math.cos(angle) * 12,
+                vy: Math.sin(angle) * 12,
+                speed: 12,
+                damage: t.damage || 1,
+                pierce: t.pierce || 2,
+                rangeRemaining: 200,
+                targetBloonId: target.id
+              });
+            }
+          });
+
+          // E: Opponent Projectiles step movement
+          const oProjs = battlesOpponentProjectilesRef.current;
+          for (let i = oProjs.length - 1; i >= 0; i--) {
+            const p = oProjs[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rangeRemaining -= 1;
+
+            let hit = false;
+            for (let j = oBloons.length - 1; j >= 0; j--) {
+              const b = oBloons[j];
+              const dist = Math.hypot(b.x - p.x, b.y - p.y);
+              if (dist < b.size + 15) {
+                b.hp -= p.damage;
+                hit = true;
+
+                // Splash spark spark
+                battlesOpponentParticlesRef.current.push({
+                  x: b.x,
+                  y: b.y,
+                  vx: (Math.random() - 0.5) * 6,
+                  vy: (Math.random() - 0.5) * 6,
+                  color: b.colorByHp || b.color || '#ef4444',
+                  life: 15,
+                  maxLife: 15,
+                  size: 3.5,
+                  type: 'pop'
+                });
+
+                if (b.hp <= 0) {
+                  oBloons.splice(j, 1);
+                  setBattlesOpponentCash((c) => {
+                    battlesOpponentCashRef.current = c + b.reward;
+                    return battlesOpponentCashRef.current;
+                  });
+                  battlesOpponentFloatingTextsRef.current.push({
+                    id: `opp_pop_${Date.now()}_${Math.random()}`,
+                    x: b.x,
+                    y: b.y,
+                    text: `+$${b.reward}`,
+                    color: '#22c55e',
+                    life: 25
+                  });
+                }
+                break;
+              }
+            }
+
+            if (hit || p.rangeRemaining <= 0) {
+              oProjs.splice(i, 1);
+            }
+          }
+
+          // F: AI Strategic Autonomic Decisions (if single player Battles)
+          if (!isMultiplayerConnected) {
+            // Build a tower
+            if (framesCounter > 0 && framesCounter % 420 === 0) {
+              const types: TowerType[] = ['dart', 'tack', 'sniper', 'bomb', 'ninja', 'wizard'];
+              const randSelected = types[Math.floor(Math.random() * types.length)];
+              const cost = TOWER_STATS[randSelected]?.cost || 300;
+
+              if (battlesOpponentCashRef.current >= cost) {
+                const trackSeg = selectedMap.track[Math.floor(selectedMap.track.length * 0.3 + Math.random() * selectedMap.track.length * 0.4)];
+                const ox = trackSeg.x + (Math.random() - 0.5) * 80;
+                const oy = trackSeg.y + (Math.random() - 0.5) * 80;
+
+                const dummy: Tower = {
+                  id: `opp_t_${Date.now()}_${Math.random()}`,
+                  type: randSelected,
+                  x: ox,
+                  y: oy,
+                  range: TOWER_STATS[randSelected]?.baseRange || 120,
+                  baseCooldown: TOWER_STATS[randSelected]?.baseCooldown || 50,
+                  cooldown: 0,
+                  damage: TOWER_STATS[randSelected]?.baseDamage || 1,
+                  pierce: TOWER_STATS[randSelected]?.basePierce || 2,
+                  cost: cost,
+                  popCount: 0,
+                  targetMode: 'First',
+                  level: 1,
+                  upgradeLevels: [0, 0, 0],
+                  upgradeIndex: 0,
+                  upgradesPurchased: 0
+                };
+
+                setBattlesOpponentCash((c) => {
+                  battlesOpponentCashRef.current = c - cost;
+                  return battlesOpponentCashRef.current;
+                });
+                battlesOpponentTowersRef.current.push(dummy);
+
+                battlesOpponentFloatingTextsRef.current.push({
+                  id: `opp_pl_${Date.now()}`,
+                  x: ox,
+                  y: oy - 15,
+                  text: randSelected.toUpperCase(),
+                  color: '#38bdf8',
+                  life: 40
+                });
+              }
+            }
+
+            // Launch a reverse strike rush at you!
+            if (framesCounter > 0 && framesCounter % 320 === 0) {
+              const oppEcoVal = battlesOpponentEcoRef.current;
+              const typeToSend = oppEcoVal > 550 ? 'MOAB' : oppEcoVal > 400 ? 'Ceramic' : oppEcoVal > 300 ? 'Rainbow' : oppEcoVal > 250 ? 'Yellow' : 'Blue';
+              const costEco = typeToSend === 'MOAB' ? 300 : typeToSend === 'Ceramic' ? 150 : typeToSend === 'Rainbow' ? 80 : typeToSend === 'Yellow' ? 45 : 20;
+              const ecoUpVal = typeToSend === 'MOAB' ? 6 : typeToSend === 'Ceramic' ? 4.5 : typeToSend === 'Rainbow' ? 2.5 : typeToSend === 'Yellow' ? 1.5 : 1.0;
+
+              if (battlesOpponentCashRef.current >= costEco) {
+                setBattlesOpponentCash((c) => {
+                  battlesOpponentCashRef.current = c - costEco;
+                  return battlesOpponentCashRef.current;
+                });
+                setBattlesOpponentEco((e) => {
+                  battlesOpponentEcoRef.current = e + ecoUpVal;
+                  return battlesOpponentEcoRef.current;
+                });
+
+                // Spawn on our player board!
+                spawnQueueRef.current.push({ delay: 5, type: typeToSend });
+              }
+            }
+          }
+
+          // G: Deaccelerate opponent floating texts and particles
+          const oParts = battlesOpponentParticlesRef.current;
+          for (let i = oParts.length - 1; i >= 0; i--) {
+            const pt = oParts[i];
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            pt.life -= 1;
+            if (pt.life <= 0) oParts.splice(i, 1);
+          }
+
+          const oTexts = battlesOpponentFloatingTextsRef.current;
+          for (let i = oTexts.length - 1; i >= 0; i--) {
+            const ft = oTexts[i];
+            ft.y -= 0.6;
+            ft.life -= 1;
+            if (ft.life <= 0) oTexts.splice(i, 1);
+          }
+        }
+
         // --- SECTION F: FLOATING TEXT DECELERATORS ---
         for (let ftIdx = floatingTextsRef.current.length - 1; ftIdx >= 0; ftIdx--) {
           const ft = floatingTextsRef.current[ftIdx];
@@ -1696,13 +2156,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       }
 
       // Render drag-and-drop placement phantom indicator
-      if (selectedShopTower) {
-        const mouseValidity = checkPlacementValidity(mousePos.x, mousePos.y);
-        const range = selectedShopTower === 'hero' ? 140 : TOWER_STATS[selectedShopTower].baseRange;
+      if (selectedShopTowerRef.current) {
+        const mouseValidity = checkPlacementValidity(mousePosRef.current.x, mousePosRef.current.y);
+        const range = selectedShopTowerRef.current === 'hero' ? 140 : TOWER_STATS[selectedShopTowerRef.current].baseRange;
         drawRangeIndicator(
           ctx,
-          mousePos.x,
-          mousePos.y,
+          mousePosRef.current.x,
+          mousePosRef.current.y,
           range,
           mouseValidity,
           canvas.width,
@@ -1710,18 +2170,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         );
 
         // Render transparent ghost tower preview under the mouse
-        if (mousePos.x >= 0 && mousePos.x <= 1000 && mousePos.y >= 0 && mousePos.y <= 1000) {
+        if (mousePosRef.current.x >= 0 && mousePosRef.current.x <= 1000 && mousePosRef.current.y >= 0 && mousePosRef.current.y <= 1000) {
           const previewTower: Tower = {
             id: 'placement_preview',
-            type: selectedShopTower,
-            x: mousePos.x,
-            y: mousePos.y,
+            type: selectedShopTowerRef.current,
+            x: mousePosRef.current.x,
+            y: mousePosRef.current.y,
             range: range,
-            baseCooldown: selectedShopTower === 'hero' ? 45 : TOWER_STATS[selectedShopTower].baseCooldown,
+            baseCooldown: selectedShopTowerRef.current === 'hero' ? 45 : TOWER_STATS[selectedShopTowerRef.current].baseCooldown,
             cooldown: 0,
-            damage: selectedShopTower === 'hero' ? 1 : TOWER_STATS[selectedShopTower].baseDamage,
-            pierce: selectedShopTower === 'hero' ? 2 : TOWER_STATS[selectedShopTower].basePierce,
-            cost: selectedShopTower === 'hero' ? 0 : TOWER_STATS[selectedShopTower].cost,
+            damage: selectedShopTowerRef.current === 'hero' ? 1 : TOWER_STATS[selectedShopTowerRef.current].baseDamage,
+            pierce: selectedShopTowerRef.current === 'hero' ? 2 : TOWER_STATS[selectedShopTowerRef.current].basePierce,
+            cost: selectedShopTowerRef.current === 'hero' ? 0 : TOWER_STATS[selectedShopTowerRef.current].cost,
             popCount: 0,
             targetMode: 'First',
             level: 1,
@@ -1749,6 +2209,35 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         drawFloatingText(ctx, ft, canvas.width, canvas.height);
       });
 
+      // --- RENDER OPPONENT BOARD CANVAS (BATTLES 2) ---
+      if (gameModeRef.current === 'battles2' && opponentCanvasRef.current) {
+        const oCanvas = opponentCanvasRef.current;
+        const oCtx = oCanvas.getContext('2d');
+        if (oCtx) {
+          drawMap(oCtx, selectedMap, oCanvas.width, oCanvas.height);
+
+          battlesOpponentProjectilesRef.current.forEach((p) => {
+            drawProjectile(oCtx, p, oCanvas.width, oCanvas.height);
+          });
+
+          battlesOpponentBloonsRef.current.forEach((b) => {
+            drawBloon(oCtx, b, oCanvas.width, oCanvas.height);
+          });
+
+          battlesOpponentTowersRef.current.forEach((t) => {
+            drawTower(oCtx, t, oCanvas.width, oCanvas.height);
+          });
+
+          battlesOpponentParticlesRef.current.forEach((pt) => {
+            drawParticle(oCtx, pt, oCanvas.width, oCanvas.height);
+          });
+
+          battlesOpponentFloatingTextsRef.current.forEach((ft) => {
+            drawFloatingText(oCtx, ft, oCanvas.width, oCanvas.height);
+          });
+        }
+      }
+
       // Maintain Loop ticker
       framesCounter++;
       animationFrameId = requestAnimationFrame(gameTick);
@@ -1756,7 +2245,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     animationFrameId = requestAnimationFrame(gameTick);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [dimensions, round, roundInProgress, selectedShopTower, mousePos, speedMultiplier, isGameOverOrFinished, autoPlay, showVictoryModal, gameMode, freePlayActive]);
+  }, [dimensions]);
 
   // Autoplay handler to fix the "autoplay doesn't work" bug
   useEffect(() => {
@@ -2690,24 +3179,186 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           </div>
         </div>
 
-        {/* Center Sandbox Canvas Game Stage */}
+        {/* Center Sandbox Canvas Game Stage or Battles Split Stages */}
         <div
           id="game-stage-container"
           ref={containerRef}
           className={`flex-1 bg-[var(--app-bg)]/85 relative flex items-center justify-center p-3 overflow-hidden ${
-            gameMode === 'sandbox' ? 'flex-col xl:flex-row gap-6 overflow-y-auto' : ''
+            gameMode === 'sandbox' || gameMode === 'battles2' ? 'flex-col overflow-y-auto' : ''
           }`}
         >
-          <canvas
-            id="arena-canvas"
-            ref={canvasRef}
-            width={1000}
-            height={1000}
-            onMouseMove={handleCanvasMouseMove}
-            onMouseLeave={handleCanvasMouseLeave}
-            onClick={handleCanvasClick}
-            className="w-full max-w-2xl aspect-square bg-slate-900 border-4 border-black/30 rounded-3xl cursor-crosshair shadow-2xl block"
-          />
+          {gameMode === 'battles2' ? (
+            <div className="flex flex-col gap-5 w-full h-full max-w-6xl items-center pb-8">
+              {/* Battles 2 Setup / Connection Control Panel */}
+              <div className="w-full bg-slate-900/90 border border-white/10 p-3.5 rounded-2xl flex flex-col gap-3 font-sans shadow-xl">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <div className="flex items-center gap-1.5 font-black uppercase text-xs tracking-wider text-cyan-400">
+                    <span>🎈</span>
+                    <span>Battles 2 Multiplayer Hub</span>
+                  </div>
+                  {isMultiplayerConnected ? (
+                    <span className="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full border border-emerald-500/20 uppercase tracking-widest animate-pulse flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Connected ({mpRole})
+                    </span>
+                  ) : (
+                    <span className="text-[9px] bg-slate-800 text-slate-300 font-bold px-3 py-1 rounded-full border border-white/5 uppercase tracking-widest">
+                      🤖 Practice VS AI Fallback
+                    </span>
+                  )}
+                </div>
+
+                {!isMultiplayerConnected ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    {/* Column 1: Host Room */}
+                    <div className="bg-black/35 p-2.5 rounded-xl border border-white/5 flex flex-col gap-2 justify-center">
+                      <button
+                        onClick={startBattlesHost}
+                        className="py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-lg transition-all text-center cursor-pointer uppercase text-[10px]"
+                      >
+                        🌐 Host Online Room
+                      </button>
+                      {battlesPeerId && (
+                        <div className="text-center mt-1">
+                          <span className="text-white/60 font-black uppercase text-[10px] block">YOUR ROOM PIN:</span>
+                          <span className="text-xl font-black text-cyan-400 tracking-widest bg-cyan-500/10 px-4 py-1.5 rounded-lg border border-cyan-500/20 inline-block mt-1">{battlesPeerId}</span>
+                          <span className="text-[9px] text-white/50 block mt-1">Share this PIN with your friend to connect!</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Column 2: Join Room */}
+                    <div className="bg-black/35 p-2.5 rounded-xl border border-white/5 flex flex-col gap-2 justify-center">
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          placeholder="Enter Room PIN code"
+                          value={battlesJoinCode}
+                          onChange={(e) => setBattlesJoinCode(e.target.value)}
+                          className="flex-1 bg-slate-950 border border-white/10 px-3 py-1.5 rounded-lg text-white font-black uppercase text-center focus:outline-none focus:border-cyan-500 text-xs"
+                        />
+                        <button
+                          onClick={() => joinBattlesRoom(battlesJoinCode)}
+                          className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-lg transition-all cursor-pointer uppercase text-[10px]"
+                        >
+                          Join PIN
+                        </button>
+                      </div>
+                      <span className="text-[9px] text-white/40 text-center">If no Room PIN is connected, you can play right away against our simulated smart AI opponent!</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-[10px] text-emerald-400 font-bold uppercase py-1">
+                    Match in progress. Tower placements & upgrading synchronizes automatically across devices!
+                  </div>
+                )}
+              </div>
+
+              {/* DUAL SCREEN ARENAS DISPLAY */}
+              <div className="flex flex-col lg:flex-row gap-5 w-full justify-center items-center">
+                {/* YOUR SCREEN */}
+                <div className="flex flex-col gap-1.5 items-center w-full max-w-[480px]">
+                  <div className="w-full flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                    <span>🛡️ YOUR BOARD</span>
+                    <span>LIVES: {lives}</span>
+                    <span>CASH: ${cash}</span>
+                    <span>ECO: +${battlesEco}</span>
+                  </div>
+                  <canvas
+                    id="arena-canvas"
+                    ref={canvasRef}
+                    width={1000}
+                    height={1000}
+                    onMouseMove={handleCanvasMouseMove}
+                    onMouseLeave={handleCanvasMouseLeave}
+                    onClick={handleCanvasClick}
+                    className="w-full aspect-square bg-slate-900 border-4 border-emerald-500/50 rounded-2xl cursor-crosshair shadow-2xl block"
+                  />
+                </div>
+
+                {/* OPPONENT SCREEN */}
+                <div className="flex flex-col gap-1.5 items-center w-full max-w-[480px]">
+                  <div className="w-full flex justify-between items-center bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-rose-450">
+                    <span>🎯 OPPONENT BOARD</span>
+                    <span>LIVES: {battlesOpponentLives}</span>
+                    <span>CASH: ${battlesOpponentCash}</span>
+                    <span>ECO: +${battlesOpponentEco}</span>
+                  </div>
+                  <canvas
+                    id="opponent-arena-canvas"
+                    ref={opponentCanvasRef}
+                    width={1000}
+                    height={1000}
+                    className="w-full aspect-square bg-slate-900 border-4 border-rose-500/50 rounded-2xl cursor-not-allowed shadow-2xl block"
+                  />
+                </div>
+              </div>
+
+              {/* RUSH OPPONENT CONTROLS */}
+              <div className="w-full bg-slate-900/90 border border-white/10 p-3.5 rounded-2xl flex flex-col gap-3 font-sans shadow-xl">
+                <span className="text-[10px] font-black uppercase text-center tracking-widest text-white/60">
+                  ⚔️ ECO RUSH OPPONENT (SEND BLOON WAVES TO OPPRESS TARGET)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full">
+                  <button
+                    onClick={() => sendBloonToOpponent('Red')}
+                    disabled={cash < 20}
+                    className="py-2 px-1.5 bg-red-650 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-[9px] rounded-xl border-b-4 border-red-900 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all uppercase"
+                  >
+                    <span className="text-sm">🔴</span>
+                    <span>Send Red</span>
+                    <span className="text-[8px] text-yellow-300">-$20 (ECO +1.0)</span>
+                  </button>
+                  <button
+                    onClick={() => sendBloonToOpponent('Yellow')}
+                    disabled={cash < 45}
+                    className="py-2 px-1.5 bg-yellow-650 hover:bg-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-[9px] rounded-xl border-b-4 border-yellow-900 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all uppercase"
+                  >
+                    <span className="text-sm">🟡</span>
+                    <span>Send Yellow</span>
+                    <span className="text-[8px] text-yellow-950">-$45 (ECO +1.5)</span>
+                  </button>
+                  <button
+                    onClick={() => sendBloonToOpponent('Rainbow')}
+                    disabled={cash < 80}
+                    className="py-2 px-1.5 bg-pink-650 hover:bg-pink-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-[9px] rounded-xl border-b-4 border-pink-900 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all uppercase"
+                  >
+                    <span className="text-sm">🌈</span>
+                    <span>Send Rainbow</span>
+                    <span className="text-[8px] text-yellow-300">-$80 (ECO +2.5)</span>
+                  </button>
+                  <button
+                    onClick={() => sendBloonToOpponent('Ceramic')}
+                    disabled={cash < 150}
+                    className="py-2 px-1.5 bg-zinc-600 hover:bg-zinc-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-[9px] rounded-xl border-b-4 border-zinc-800 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all uppercase"
+                  >
+                    <span className="text-sm">🗿</span>
+                    <span>Send Ceramic</span>
+                    <span className="text-[8px] text-yellow-300">-$150 (ECO +4.5)</span>
+                  </button>
+                  <button
+                    onClick={() => sendBloonToOpponent('MOAB')}
+                    disabled={cash < 300}
+                    className="py-2 px-1.5 bg-blue-650 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-[9px] rounded-xl border-b-4 border-blue-900 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all uppercase"
+                  >
+                    <span className="text-sm">🛸</span>
+                    <span>Send MOAB</span>
+                    <span className="text-[8px] text-yellow-300">-$300 (ECO +6.0)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <canvas
+              id="arena-canvas"
+              ref={canvasRef}
+              width={1000}
+              height={1000}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseLeave={handleCanvasMouseLeave}
+              onClick={handleCanvasClick}
+              className="w-full max-w-2xl aspect-square bg-slate-900 border-4 border-black/30 rounded-3xl cursor-crosshair shadow-2xl block"
+            />
+          )}
 
           {gameMode === 'sandbox' && (
             <div

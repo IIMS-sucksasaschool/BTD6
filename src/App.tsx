@@ -39,7 +39,7 @@ export default function App() {
   const [selectedMapId, setSelectedMapId] = useState<string>('monkey_meadow');
   const [selectedHero, setSelectedHero] = useState<HeroType>('quincy');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Medium');
-  const [selectedGameMode, setSelectedGameMode] = useState<'campaign' | 'endless' | 'sandbox'>('campaign');
+  const [selectedGameMode, setSelectedGameMode] = useState<'campaign' | 'endless' | 'sandbox' | 'battles2'>('campaign');
 
   // GameOver Status popup modal state
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);

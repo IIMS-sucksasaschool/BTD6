@@ -1,4 +1,4 @@
-export type TowerType = 'dart' | 'tack' | 'sniper' | 'bomb' | 'ice' | 'super' | 'boomerang' | 'ninja' | 'glue' | 'wizard' | 'alchemist' | 'druid' | 'farm' | 'sub' | 'buccaneer' | 'pool' | 'hero';
+export type TowerType = 'dart' | 'tack' | 'sniper' | 'bomb' | 'ice' | 'super' | 'boomerang' | 'ninja' | 'glue' | 'wizard' | 'alchemist' | 'druid' | 'farm' | 'sub' | 'buccaneer' | 'pool' | 'hero' | 'ace' | 'heli' | 'mortar' | 'dartling' | 'spike' | 'village' | 'engineer' | 'beast' | 'mermonkey';
 
 export type TargetMode = 'First' | 'Last' | 'Strong' | 'Close';
 
@@ -82,7 +82,7 @@ export interface Tower {
 
 export interface Projectile {
   id: string;
-  type: 'dart' | 'tack' | 'bullet' | 'bomb' | 'iceRing' | 'beam' | 'boomerang' | 'shuriken' | 'glue' | 'magic' | 'potion' | 'thorn' | 'grape';
+  type: 'dart' | 'tack' | 'bullet' | 'bomb' | 'iceRing' | 'beam' | 'boomerang' | 'shuriken' | 'glue' | 'magic' | 'potion' | 'thorn' | 'grape' | 'spike' | 'spikes' | 'plane' | 'rocket' | 'ring' | 'grenade' | 'energy';
   x: number;
   y: number;
   vx: number;
