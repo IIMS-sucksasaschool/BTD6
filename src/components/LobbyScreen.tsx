@@ -9,7 +9,7 @@ import { MiniMapPreview } from './MiniMapPreview';
 interface LobbyScreenProps {
   monkeyMoney: number;
   unlockedMapIds: string[];
-  onStartGame: (mapId: string, hero: HeroType, difficulty: Difficulty, gameMode: 'campaign' | 'endless') => void;
+  onStartGame: (mapId: string, hero: HeroType, difficulty: Difficulty, gameMode: 'campaign' | 'endless' | 'sandbox') => void;
   onNavigateToShop: () => void;
   onNavigateToAchievements: () => void;
   onNavigateToSettings: () => void;
@@ -33,7 +33,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [selectedMapId, setSelectedMapId] = useState<string>('monkey_meadow');
   const [selectedHero, setSelectedHero] = useState<HeroType>('quincy');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Medium');
-  const [selectedGameMode, setSelectedGameMode] = useState<'campaign' | 'endless'>('campaign');
+  const [selectedGameMode, setSelectedGameMode] = useState<'campaign' | 'endless' | 'sandbox'>('campaign');
 
   // Multi-computer save storage states
   const selectedMap = MAPS.find((m) => m.id === selectedMapId) || MAPS[0];
@@ -332,8 +332,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               </div>
               <div className="flex justify-between border-b border-white/10 pb-1.5">
                 <span className="font-bold text-white/50">SURVIVAL TARGET</span>
-                <span className={`font-black uppercase ${selectedGameMode === 'endless' ? 'text-purple-300' : 'text-rose-400'}`}>
-                  {selectedGameMode === 'endless' ? 'Infinite (Endless Freeplay)' : 'Round 40 (MOAB BOSS)'}
+                <span className={`font-black uppercase ${selectedGameMode === 'endless' ? 'text-purple-300' : selectedGameMode === 'sandbox' ? 'text-amber-300 animate-pulse' : 'text-rose-400'}`}>
+                  {selectedGameMode === 'endless' ? 'Infinite (Endless Freeplay)' : selectedGameMode === 'sandbox' ? 'Testing (Sandbox Sandbox)' : 'Round 40 (MOAB BOSS)'}
                 </span>
               </div>
               <div className="flex justify-between pb-1.5">
@@ -345,30 +345,42 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             {/* Game Mode Selection */}
             <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
               <span className="text-[10px] font-black text-white/65 uppercase tracking-widest text-center">Select Game Mode</span>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-black/25 rounded-xl border border-white/5">
+              <div className="grid grid-cols-3 gap-1 p-1 bg-black/25 rounded-xl border border-white/5">
                 <button
                   id="mode-select-campaign"
                   type="button"
                   onClick={() => setSelectedGameMode('campaign')}
-                  className={`py-2 px-1 text-[10px] font-black rounded-lg transition-all text-center cursor-pointer uppercase ${
+                  className={`py-2 px-0.5 text-[9px] font-black rounded-lg transition-all text-center cursor-pointer uppercase ${
                     selectedGameMode === 'campaign'
                       ? 'bg-[var(--app-accent)] text-white font-black shadow border-b-2 border-black/35'
                       : 'text-white/65 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  🏆 Campaign (R1-40)
+                  🏆 Campaign
                 </button>
                 <button
                   id="mode-select-endless"
                   type="button"
                   onClick={() => setSelectedGameMode('endless')}
-                  className={`py-2 px-1 text-[10px] font-black rounded-lg transition-all text-center cursor-pointer uppercase ${
+                  className={`py-2 px-0.5 text-[9px] font-black rounded-lg transition-all text-center cursor-pointer uppercase ${
                     selectedGameMode === 'endless'
                       ? 'bg-[var(--app-accent)] text-white font-black shadow border-b-2 border-black/35'
                       : 'text-white/65 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  🌌 Endless Freeplay
+                  🌌 Endless
+                </button>
+                <button
+                  id="mode-select-sandbox"
+                  type="button"
+                  onClick={() => setSelectedGameMode('sandbox')}
+                  className={`py-2 px-0.5 text-[9px] font-black rounded-lg transition-all text-center cursor-pointer uppercase ${
+                    selectedGameMode === 'sandbox'
+                      ? 'bg-[var(--app-accent)] text-white font-black shadow border-b-2 border-black/35'
+                      : 'text-white/65 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  🧪 Sandbox
                 </button>
               </div>
             </div>

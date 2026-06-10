@@ -551,6 +551,11 @@ export function drawTower(
   const sizeMult = minDim / 1000;
   const tSize = 18 * sizeMult * 1.35; // Size of monkey body
 
+  const lv = tower.upgradeLevels || [0, 0, 0];
+  const top = lv[0];
+  const mid = lv[1];
+  const bot = lv[2];
+
   ctx.save();
 
   // Find targeting angle
@@ -578,8 +583,31 @@ export function drawTower(
     // Dart Monkey (Brown fur, green headband)
     ctx.rotate(angle);
 
+    // Render Cape if mid >= 3 (Super Fan Club)
+    if (mid >= 3) {
+      ctx.fillStyle = '#3b82f6'; // Bright Blue Cape
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 0.5, -tSize * 0.3);
+      ctx.lineTo(-tSize * 1.8, -tSize * 0.82);
+      ctx.lineTo(-tSize * 1.4, 0);
+      ctx.lineTo(-tSize * 1.8, tSize * 0.82);
+      ctx.lineTo(-tSize * 0.5, tSize * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    } else if (bot >= 3) {
+      // Crossbow master leather back-cape
+      ctx.fillStyle = '#451a03'; // Dark brown leather
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 0.9, -tSize * 0.4);
+      ctx.lineTo(-tSize * 1.6, -tSize * 0.7);
+      ctx.lineTo(-tSize * 1.5, tSize * 0.7);
+      ctx.lineTo(-tSize * 0.9, tSize * 0.4);
+      ctx.closePath();
+      ctx.fill();
+    }
+
     // Cute ears
-    ctx.fillStyle = '#b45309'; // brown-700
+    ctx.fillStyle = '#b45309'; // brown-700 parent color
     ctx.beginPath();
     ctx.arc(-tSize * 0.9, -tSize * 0.4, tSize * 0.35, 0, Math.PI * 2);
     ctx.arc(-tSize * 0.9, tSize * 0.4, tSize * 0.35, 0, Math.PI * 2);
@@ -591,7 +619,7 @@ export function drawTower(
     ctx.fill();
 
     // Body/fur
-    ctx.fillStyle = '#b45309';
+    ctx.fillStyle = bot >= 3 ? '#292524' : '#b45309'; // Dark charcoal fur for Crossbow master
     ctx.beginPath();
     ctx.arc(-tSize * 0.35, 0, tSize * 0.9, 0, Math.PI * 2);
     ctx.fill();
@@ -601,6 +629,14 @@ export function drawTower(
     ctx.beginPath();
     ctx.ellipse(tSize * 0.1, 0, tSize * 0.65, tSize * 0.55, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Mask for Super Fan Club (mid >= 3)
+    if (mid >= 3) {
+      ctx.fillStyle = '#ef4444'; // Red Super Mask
+      ctx.beginPath();
+      ctx.ellipse(tSize * 0.15, 0, tSize * 0.55, tSize * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Eyes
     ctx.fillStyle = '#ffffff';
@@ -614,59 +650,154 @@ export function drawTower(
     ctx.arc(tSize * 0.22, tSize * 0.15, tSize * 0.07, 0, Math.PI * 2);
     ctx.fill();
 
-    // Green Headband
-    const upgCount = tower.upgradeLevels ? (tower.upgradeLevels[0] + tower.upgradeLevels[1] + tower.upgradeLevels[2]) : tower.upgradesPurchased;
-    ctx.strokeStyle = upgCount >= 2 ? '#a855f7' : '#22c55e'; // purple/green depending on upgrades
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(-tSize * 0.35, 0, tSize * 0.92, -Math.PI * 0.3, Math.PI * 0.3);
-    ctx.stroke();
+    // Spike-o-pult Spiked Iron Helmet (top >= 3)
+    if (top >= 3) {
+      ctx.fillStyle = '#94a3b8'; // Steel color
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(-tSize * 0.15, 0, tSize * 0.85, tSize * 0.72, 0, Math.PI * 0.6, Math.PI * 1.4);
+      ctx.lineTo(-tSize * 0.15, -tSize * 0.72);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
 
-    // Hand holding Dart
-    ctx.fillStyle = '#b45309';
+      // Sharp iron spikes on the helmet!
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 0.8, -tSize * 0.4);
+      ctx.lineTo(-tSize * 1.25, -tSize * 0.6);
+      ctx.lineTo(-tSize * 0.65, -tSize * 0.1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 0.8, tSize * 0.4);
+      ctx.lineTo(-tSize * 1.25, tSize * 0.6);
+      ctx.lineTo(-tSize * 0.65, tSize * 0.1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (bot >= 3) {
+      // Black hooded cowl for Crossbow Master
+      ctx.strokeStyle = '#1c1917';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.35, 0, tSize * 0.95, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.stroke();
+    } else {
+      // Headband
+      const upgCount = top + mid + bot;
+      ctx.strokeStyle = upgCount >= 2 ? '#a855f7' : '#22c55e'; // purple/green depending on upgrades
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.35, 0, tSize * 0.92, -Math.PI * 0.3, Math.PI * 0.3);
+      ctx.stroke();
+    }
+
+    // Hand holding weapon
+    ctx.fillStyle = bot >= 3 ? '#292524' : '#b45309';
     ctx.beginPath();
     ctx.arc(tSize * 0.5, tSize * 0.6, tSize * 0.25, 0, Math.PI * 2);
     ctx.fill();
-    // Tiny Dart vector
-    ctx.strokeStyle = '#ffffff';
-    ctx.fillStyle = '#ef4444';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(tSize * 0.4, tSize * 0.6);
-    ctx.lineTo(tSize * 0.9, tSize * 0.8);
-    ctx.lineTo(tSize * 0.75, tSize * 0.5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+
+    if (bot >= 3) {
+      // DRAW CROSSBOW IN HAND instead of a simple dart!
+      ctx.strokeStyle = '#854d0e'; // Wooden frame
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.35, tSize * 0.8);
+      ctx.lineTo(tSize * 1.05, tSize * 0.4); // Crossbow stock
+      ctx.stroke();
+
+      ctx.strokeStyle = '#94a3b8'; // Metal bow curve
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.8, tSize * 0.1);
+      ctx.quadraticCurveTo(tSize * 1.25, tSize * 0.45, tSize * 0.8, tSize * 0.8);
+      ctx.stroke();
+    } else {
+      // Tiny Dart vector
+      ctx.strokeStyle = '#ffffff';
+      ctx.fillStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.4, tSize * 0.6);
+      ctx.lineTo(tSize * 0.9, tSize * 0.8);
+      ctx.lineTo(tSize * 0.75, tSize * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
 
   } else if (tower.type === 'tack') {
     // Tack shooter: Pink mechanical multi-launcher dome
     ctx.rotate(angle);
-    ctx.fillStyle = '#ec4899'; // pink-500 dome
+    
+    // Change body color depending on upgrades
+    if (top >= 3) {
+      // Hot Shots / Ring of Fire: Fiery animated hot orange with fire-ports
+      ctx.fillStyle = '#ea580c';
+    } else if (mid >= 3) {
+      // Blade Shooter: Shiny industrial silver-slate with blade ornaments
+      ctx.fillStyle = '#64748b';
+    } else if (bot >= 3) {
+      // Tack Zone: Deep high-tech violet/black
+      ctx.fillStyle = '#4c1d95';
+    } else {
+      ctx.fillStyle = '#ec4899'; // pink-500 dome default
+    }
+    
     ctx.beginPath();
     ctx.arc(0, 0, tSize * 1.1, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#be185d'; // pink-700
+    ctx.strokeStyle = top >= 3 ? '#9a3412' : mid >= 3 ? '#334155' : bot >= 3 ? '#1e1b4b' : '#be185d';
     ctx.lineWidth = 3.5;
     ctx.stroke();
 
     // Center nozzle crystal structure
-    ctx.fillStyle = '#fce7f3';
+    ctx.fillStyle = top >= 3 ? '#fef08a' : mid >= 3 ? '#bae6fd' : bot >= 3 ? '#fde047' : '#fce7f3';
     ctx.beginPath();
     ctx.rect(-tSize * 0.3, -tSize * 0.3, tSize * 0.6, tSize * 0.6);
     ctx.fill();
     ctx.stroke();
 
-    // Draw 8 tack launch ports around perimeter
-    ctx.fillStyle = '#475569'; // steel color
-    for (let i = 0; i < 8; i++) {
-      const portAngle = (i * Math.PI) / 4;
+    // Warm heat wave glow ring for Fire (top >= 3)
+    if (top >= 3) {
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, tSize * 1.4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Draw 8/12 tack launch ports around perimeter
+    const portCount = bot >= 3 ? 12 : 8;
+    ctx.fillStyle = top >= 3 ? '#7c2d12' : mid >= 3 ? '#475569' : bot >= 3 ? '#311042' : '#475569';
+    for (let i = 0; i < portCount; i++) {
+      const portAngle = (i * Math.PI) / (portCount / 2);
       ctx.save();
       ctx.rotate(portAngle);
-      ctx.fillRect(tSize * 0.95, -tSize * 0.15, tSize * 0.3, tSize * 0.3);
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(tSize * 0.95, -tSize * 0.15, tSize * 0.3, tSize * 0.3);
+      
+      if (mid >= 3) {
+        // Blade ornament instead of boxy port
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.moveTo(tSize * 0.8, -tSize * 0.1);
+        ctx.lineTo(tSize * 1.35, 0);
+        ctx.lineTo(tSize * 0.8, tSize * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      } else {
+        ctx.fillRect(tSize * 0.95, -tSize * 0.15, tSize * 0.3, tSize * 0.3);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tSize * 0.95, -tSize * 0.15, tSize * 0.3, tSize * 0.3);
+      }
       ctx.restore();
     }
 
@@ -675,25 +806,34 @@ export function drawTower(
     ctx.rotate(angle);
 
     // Ears
-    ctx.fillStyle = '#78350f';
+    ctx.fillStyle = top >= 3 ? '#451a03' : '#78350f';
     ctx.beginPath();
     ctx.arc(-tSize * 0.8, -tSize * 0.4, tSize * 0.3, 0, Math.PI * 2);
     ctx.arc(-tSize * 0.8, tSize * 0.4, tSize * 0.3, 0, Math.PI * 2);
     ctx.fill();
 
     // Fur
-    ctx.fillStyle = '#78350f';
+    ctx.fillStyle = top >= 3 ? '#451a03' : '#78350f';
     ctx.beginPath();
     ctx.arc(-tSize * 0.3, 0, tSize * 0.85, 0, Math.PI * 2);
     ctx.fill();
 
-    // Camouflage headband wrap
-    ctx.fillStyle = '#15803d'; // forest green
-    ctx.beginPath();
-    ctx.arc(-tSize * 0.3, 0, tSize * 0.88, -0.6, 0.6);
-    ctx.lineTo(-tSize * 0.2, 0);
-    ctx.closePath();
-    ctx.fill();
+    // Camouflage caps / headbands / helmets depending on upgrade
+    if (mid >= 3) {
+      // High tech tactical helmet for Supply/Elite
+      ctx.fillStyle = '#1e3a1e'; // camo armor green
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.35, 0, tSize * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Camouflage headband wrap
+      ctx.fillStyle = top >= 3 ? '#14532d' : '#15803d'; // dark green / forest green
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.3, 0, tSize * 0.88, -0.6, 0.6);
+      ctx.lineTo(-tSize * 0.2, 0);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // Monkey Face
     ctx.fillStyle = '#fecdd3';
@@ -702,22 +842,60 @@ export function drawTower(
     ctx.fill();
 
     // Sniper Camo eyes goggles
-    ctx.fillStyle = '#1e293b'; // dark shades
-    ctx.fillRect(tSize * 0.05, -tSize * 0.32, tSize * 0.38, tSize * 0.22);
-    ctx.fillRect(tSize * 0.05, tSize * 0.1, tSize * 0.38, tSize * 0.22);
+    if (mid >= 3) {
+      // Glowing green night vision goggles!
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(tSize * 0.05, -tSize * 0.32, tSize * 0.42, tSize * 0.64);
+      ctx.fillStyle = '#22c55e'; // neon green lens glow
+      ctx.beginPath();
+      ctx.arc(tSize * 0.26, -tSize * 0.14, tSize * 0.1, 0, Math.PI * 2);
+      ctx.arc(tSize * 0.26, tSize * 0.14, tSize * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (bot >= 3) {
+      // Cool black tactical visor (Semi Auto / Defender)
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(tSize * 0.2, 0, tSize * 0.4, tSize * 0.32, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ef4444'; // red visor line
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#1e293b'; // dark shades
+      ctx.fillRect(tSize * 0.05, -tSize * 0.32, tSize * 0.38, tSize * 0.22);
+      ctx.fillRect(tSize * 0.05, tSize * 0.1, tSize * 0.38, tSize * 0.22);
+    }
 
     // LONG METALLIC SNIPER BARREL
-    ctx.fillStyle = '#334155'; // gunmetal steel
-    ctx.fillRect(tSize * 0.4, -tSize * 0.12, tSize * 1.6, tSize * 0.24);
+    ctx.fillStyle = top >= 3 ? '#0f172a' : '#334155'; // gunmetal steel / elite black
+    
+    if (bot >= 3) {
+      // Dual barrel layout (Semi auto)
+      ctx.fillRect(tSize * 0.4, -tSize * 0.2, tSize * 1.5, tSize * 0.12);
+      ctx.fillRect(tSize * 0.4, tSize * 0.08, tSize * 1.5, tSize * 0.12);
+    } else {
+      ctx.fillRect(tSize * 0.4, -tSize * 0.12, tSize * 1.6, tSize * 0.24);
+    }
+
+    // Laser Sight indicator line for Deadly Precision (top >= 3)
+    if (top >= 3) {
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.75)'; // vibrant bright red laser
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 2.0, 0);
+      ctx.lineTo(tSize * 4.5, 0);
+      ctx.stroke();
+    }
+
     // Scope attachment
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = top >= 3 ? '#fbbf24' : '#0f172a'; // Golden scope for precision
     ctx.fillRect(tSize * 0.6, -tSize * 0.26, tSize * 0.5, tSize * 0.14);
 
   } else if (tower.type === 'bomb') {
     // Bomb shooter: Dark heavy mechanical cannon barrel, rotating
     ctx.rotate(angle);
 
-    ctx.fillStyle = '#374151'; // dark carbon
+    ctx.fillStyle = top >= 3 ? '#1e293b' : mid >= 3 ? '#ef4444' : bot >= 3 ? '#1c1917' : '#374151'; // custom bodies
     // Base platform rotating mount
     ctx.beginPath();
     ctx.arc(0, 0, tSize * 1.1, 0, Math.PI * 2);
@@ -727,42 +905,77 @@ export function drawTower(
     ctx.stroke();
 
     // Heavy main cannon muzzle cylinder
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(-tSize * 0.5, -tSize * 0.45, tSize * 1.5, tSize * 0.9);
-    ctx.strokeRect(-tSize * 0.5, -tSize * 0.45, tSize * 1.5, tSize * 0.9);
+    ctx.fillStyle = top >= 3 ? '#475569' : mid >= 3 ? '#991b1b' : bot >= 3 ? '#0c0a09' : '#1f2937';
+    
+    if (top >= 3) {
+      // Bloon Crush: Heavy blocky triple-reinforced muzzle
+      ctx.fillRect(-tSize * 0.5, -tSize * 0.52, tSize * 1.6, tSize * 1.04);
+      ctx.strokeRect(-tSize * 0.5, -tSize * 0.52, tSize * 1.6, tSize * 1.04);
+      
+      // Caution stripes
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(0, -tSize * 0.52, tSize * 0.12, tSize * 1.04);
+      ctx.fillRect(tSize * 0.4, -tSize * 0.52, tSize * 0.12, tSize * 1.04);
+    } else {
+      ctx.fillRect(-tSize * 0.5, -tSize * 0.45, tSize * 1.5, tSize * 0.9);
+      ctx.strokeRect(-tSize * 0.5, -tSize * 0.45, tSize * 1.5, tSize * 0.9);
+    }
+
+    // Shark teeth paint decal for MOAB Mauler (mid >= 3)
+    if (mid >= 3) {
+      ctx.fillStyle = '#ffffff'; // White teeth triangle
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.4, -tSize * 0.35);
+      ctx.lineTo(tSize * 0.8, -tSize * 0.35);
+      ctx.lineTo(tSize * 0.6, -tSize * 0.15);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.4, tSize * 0.35);
+      ctx.lineTo(tSize * 0.8, tSize * 0.35);
+      ctx.lineTo(tSize * 0.6, tSize * 0.15);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = '#ea580c'; // Angry glowing eye
+      ctx.beginPath();
+      ctx.arc(tSize * 0.15, -tSize * 0.35, tSize * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Tip ring
-    ctx.fillStyle = '#dc2626'; // bright red hazard rim
+    ctx.fillStyle = top >= 3 ? '#eab308' : mid >= 3 ? '#000000' : bot >= 3 ? '#a855f7' : '#dc2626'; // hazard rim colors
     ctx.fillRect(tSize * 0.95, -tSize * 0.48, tSize * 0.15, tSize * 0.96);
 
   } else if (tower.type === 'ice') {
     // Ice monkey: Cute light blue sparkly ice crown monkey
     // Face doesn't strictly need rotation angle since ice blast sweeps 360% in radius! Let's rotate gently with time
     const hoverWobble = Math.sin(Date.now() * 0.005) * 0.1;
-    ctx.rotate(hoverWobble);
+    ctx.rotate(angle || hoverWobble);
 
     // White furry body
-    ctx.fillStyle = '#e0f2fe'; // sky-100 sparkly fur
+    ctx.fillStyle = top >= 3 ? '#bae6fd' : bot >= 3 ? '#0c4a6e' : '#e0f2fe'; // Super Brittle gets blue frost fur, icicle get dark arctic
     ctx.beginPath();
     ctx.arc(0, 0, tSize * 0.95, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#7dd3fc'; // sky-300
+    ctx.strokeStyle = top >= 3 ? '#38bdf8' : '#7dd3fc'; // sky-300
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Spiky icicles on head (Crown)
-    ctx.fillStyle = '#38bdf8'; // blue ice spikes
+    // Spiky icicles on head (Crown/Spikes)
+    ctx.fillStyle = top >= 3 ? '#a5f3fc' : bot >= 3 ? '#38bdf8' : '#38bdf8'; // icy crown
     ctx.beginPath();
     ctx.moveTo(-tSize * 0.5, -tSize * 0.85);
-    ctx.lineTo(-tSize * 0.2, -tSize * 1.3);
+    ctx.lineTo(-tSize * 0.2, -tSize * (top >= 3 ? 1.6 : 1.3));
     ctx.lineTo(0, -tSize * 0.8);
-    ctx.lineTo(tSize * 0.2, -tSize * 1.3);
+    ctx.lineTo(tSize * 0.2, -tSize * (top >= 3 ? 1.6 : 1.3));
     ctx.lineTo(tSize * 0.5, -tSize * 0.85);
     ctx.closePath();
     ctx.fill();
 
     // Face skin
-    ctx.fillStyle = '#bfdbfe'; // icy blue skin
+    ctx.fillStyle = top >= 3 ? '#7dd3fc' : '#bfdbfe'; // icy blue skin
     ctx.beginPath();
     ctx.ellipse(0, tSize * 0.1, tSize * 0.65, tSize * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -773,18 +986,48 @@ export function drawTower(
     ctx.arc(-tSize * 0.2, -tSize * 0.05, tSize * 0.12, 0, Math.PI * 2);
     ctx.arc(tSize * 0.2, -tSize * 0.05, tSize * 0.12, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0284c7'; // deep ice blue pup
+    ctx.fillStyle = top >= 3 ? '#0891b2' : '#0284c7'; // deep ice blue pup
     ctx.beginPath();
     ctx.arc(-tSize * 0.2, -tSize * 0.05, tSize * 0.06, 0, Math.PI * 2);
     ctx.arc(tSize * 0.2, -tSize * 0.05, tSize * 0.06, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw active Snowstorm swirl rings around base (mid >= 3)
+    if (mid >= 3) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.5;
+      const rotRing = (Date.now() / 400);
+      ctx.save();
+      ctx.rotate(rotRing);
+      ctx.strokeRect(-tSize * 1.35, -tSize * 1.35, tSize * 2.7, tSize * 2.7);
+      ctx.restore();
+    }
+
+    // Draw large glowing icicle trident in hand for bot >= 3 (Icicle Impale)
+    if (bot >= 3) {
+      ctx.strokeStyle = '#bae6fd';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.3, tSize * 0.4);
+      ctx.lineTo(tSize * 1.05, tSize * 0.2); // Shaft
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8'; // Crystal head
+      ctx.beginPath();
+      ctx.moveTo(tSize * 1.05, tSize * 0.2);
+      ctx.lineTo(tSize * 1.35, tSize * 0.1);
+      ctx.lineTo(tSize * 1.45, tSize * 0.2); // center spike
+      ctx.lineTo(tSize * 1.35, tSize * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
 
   } else if (tower.type === 'super') {
     // Super monkey: Glowing yellow mask, grand red cape
     ctx.rotate(angle);
 
     // Render Cape pointing backwards
-    ctx.fillStyle = '#dc2626'; // Imperial Red Cape
+    ctx.fillStyle = bot >= 3 ? '#1e1b4b' : top >= 3 ? '#eab308' : '#dc2626'; // Golden halo, dark cosmic capes
     ctx.beginPath();
     ctx.moveTo(-tSize * 0.5, -tSize * 0.3);
     ctx.lineTo(-tSize * 2.1, -tSize * 0.85);
@@ -794,33 +1037,59 @@ export function drawTower(
     ctx.closePath();
     ctx.fill();
 
-    // Dark brown/purple fur
-    ctx.fillStyle = '#4c1d95'; // violet-900 fur
+    // Body/fur - transforms into golden sun god, metal robot, or dark cowl
+    ctx.fillStyle = top >= 3 ? '#fef08a' : mid >= 3 ? '#64748b' : bot >= 3 ? '#1e1b4b' : '#4c1d95'; // Sun god, cyborg, dark knight
     ctx.beginPath();
     ctx.arc(-tSize * 0.3, 0, tSize * 0.95, 0, Math.PI * 2);
     ctx.fill();
 
-    // Super Hero Mask
-    ctx.fillStyle = '#eab308'; // glowing gold super-hero mask
+    // Golden Halo decoration for Sun God (top >= 3)
+    if (top >= 3) {
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.3, 0, tSize * 1.35, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Halo star flares
+      for (let starPt = 0; starPt < Math.PI * 2; starPt += Math.PI / 4) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(-tSize * 0.3 + Math.cos(starPt) * tSize * 1.35, Math.sin(starPt) * tSize * 1.35, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Super Hero Mask / Visors
+    ctx.fillStyle = top >= 3 ? '#facc15' : mid >= 3 ? '#cbd5e1' : bot >= 3 ? '#3b0764' : '#eab308';
     ctx.beginPath();
     ctx.ellipse(tSize * 0.1, 0, tSize * 0.72, tSize * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Glowing white energy eyes
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(tSize * 0.22, -tSize * 0.15, tSize * 0.15, 0, Math.PI * 2);
-    ctx.arc(tSize * 0.22, tSize * 0.15, tSize * 0.15, 0, Math.PI * 2);
-    ctx.fill();
+    // Glowing white energy eyes / cyborg laser line visors
+    if (mid >= 3) {
+      // Cybo-Visor red line
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(tSize * 0.12, -tSize * 0.22, tSize * 0.3, tSize * 0.44);
+      
+      ctx.fillStyle = '#94a3b8'; // Bionic steel arm gun
+      ctx.fillRect(tSize * 0.35, tSize * 0.3, tSize * 0.75, tSize * 0.28);
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(tSize * 0.22, -tSize * 0.15, tSize * 0.15, 0, Math.PI * 2);
+      ctx.arc(tSize * 0.22, tSize * 0.15, tSize * 0.15, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-    // Blue laser lines floating out of eyes
-    ctx.strokeStyle = '#60a5fa';
-    ctx.lineWidth = 2;
+    // Laser rays floating out of eyes (Cyborg/SunGod sparks)
+    ctx.strokeStyle = top >= 3 ? '#fbbf24' : mid >= 3 ? '#f87171' : bot >= 3 ? '#c084fc' : '#60a5fa';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(tSize * 0.3, -tSize * 0.15);
-    ctx.lineTo(tSize * 0.6, -tSize * 0.12);
+    ctx.lineTo(tSize * 0.62, -tSize * 0.12);
     ctx.moveTo(tSize * 0.3, tSize * 0.15);
-    ctx.lineTo(tSize * 0.6, tSize * 0.12);
+    ctx.lineTo(tSize * 0.62, tSize * 0.12);
     ctx.stroke();
 
   } else if (tower.type === 'hero') {
@@ -922,7 +1191,7 @@ export function drawTower(
     ctx.arc(-tSize * 0.35, 0, tSize * 0.9, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#06b6d4'; // Cyan vest
+    ctx.fillStyle = top >= 3 ? '#991b1b' : bot >= 3 ? '#7c2d12' : '#06b6d4'; // Crimson, leather brown, or Cyan vest
     ctx.beginPath();
     ctx.arc(-tSize * 0.35, 0, tSize * 0.92, -0.5, 0.5);
     ctx.lineTo(-tSize * 0.3, 0);
@@ -934,31 +1203,81 @@ export function drawTower(
     ctx.ellipse(tSize * 0.1, 0, tSize * 0.65, tSize * 0.55, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Blue headband
-    ctx.strokeStyle = '#0284c7';
+    // Eyepatch for MOAB Press (bot >= 3)
+    if (bot >= 3) {
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.ellipse(tSize * 0.22, -tSize * 0.18, tSize * 0.12, tSize * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Headband
+    ctx.strokeStyle = top >= 3 ? '#ea580c' : '#0284c7';
     ctx.lineWidth = 3.5;
     ctx.beginPath();
     ctx.arc(-tSize * 0.35, 0, tSize * 0.91, -Math.PI * 0.25, Math.PI * 0.25);
     ctx.stroke();
 
-    // Hand holding a white boomerang
-    ctx.fillStyle = '#ffffff';
+    // Hand holding a boomerang
+    if (mid >= 3) {
+      // Turbo Charge: Bionic silver-blue prosthetic arm
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(tSize * 0.3, tSize * 0.35, tSize * 0.55, tSize * 0.28);
+      ctx.fillStyle = '#22d3ee'; // energy line glow
+      ctx.fillRect(tSize * 0.45, tSize * 0.45, tSize * 0.35, tSize * 0.08);
+    } else {
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.arc(tSize * 0.4, tSize * 0.5, tSize * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw boomerang based on upgrade level
+    ctx.save();
+    ctx.translate(tSize * 0.4, tSize * 0.4);
+    ctx.rotate(0.3);
+    
+    ctx.strokeStyle = top >= 3 ? '#ef4444' : bot >= 3 ? '#d97706' : '#ffffff'; // Red glaive, heavy bronze, or white curved boomerang
+    ctx.fillStyle = top >= 3 ? '#b91c1c' : bot >= 3 ? '#b45309' : '#e2e8f0';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(tSize * 0.35, tSize * 0.4);
-    ctx.quadraticCurveTo(tSize * 0.8, tSize * 0.8, tSize * 0.9, tSize * 0.2);
-    ctx.quadraticCurveTo(tSize * 0.7, tSize * 0.6, tSize * 0.35, tSize * 0.6);
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(tSize * 0.4, tSize * 0.4, tSize * 0.55, -tSize * 0.25);
+    ctx.quadraticCurveTo(tSize * 0.15, tSize * 0.2, 0, tSize * 0.22);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Floating circular orbit glaives for Glaive Lord (top >= 3)
+    if (top >= 3) {
+      const rotGlaive = (Date.now() / 240);
+      ctx.save();
+      ctx.rotate(rotGlaive);
+      
+      // Floating blade 1
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(tSize * 1.5, 0, 5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Floating blade 2
+      ctx.beginPath();
+      ctx.arc(-tSize * 1.5, 0, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
   } else if (tower.type === 'ninja') {
     // Ninja Monkey (Dark slate gray robes, red headband)
     ctx.rotate(angle);
-    ctx.fillStyle = '#1e293b'; // Slate dark robes
+    
+    ctx.fillStyle = top >= 3 ? '#ec4899' : bot >= 3 ? '#0f172a' : '#1e293b'; // Grandmaster crimson, shadow black, or slate robes
     ctx.beginPath();
     ctx.arc(-tSize * 0.3, 0, tSize * 0.88, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#ef4444'; // Red headband tails behind it
+    ctx.fillStyle = top >= 3 ? '#facc15' : '#ef4444'; // Gold or Red headband tails behind it
     ctx.beginPath();
     ctx.moveTo(-tSize * 1.1, -tSize * 0.2);
     ctx.lineTo(-tSize * 1.5, -tSize * 0.4);
@@ -969,60 +1288,93 @@ export function drawTower(
     ctx.fill();
 
     // Face cut-out mask
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = top >= 3 ? '#bf185c' : bot >= 3 ? '#020617' : '#1e293b';
     ctx.fillRect(-tSize * 0.2, -tSize * 0.4, tSize * 0.8, tSize * 0.8);
     ctx.fillStyle = '#fdba74'; // Peach skin eye strip
     ctx.fillRect(tSize * 0.1, -tSize * 0.2, tSize * 0.4, tSize * 0.4);
 
-    // Glowing white eyes
-    ctx.fillStyle = '#ffffff';
+    // Glowing eyes
+    ctx.fillStyle = top >= 3 ? '#fef08a' : '#ffffff';
     ctx.beginPath();
     ctx.arc(tSize * 0.25, -tSize * 0.08, tSize * 0.08, 0, Math.PI * 2);
     ctx.arc(tSize * 0.25, tSize * 0.08, tSize * 0.08, 0, Math.PI * 2);
     ctx.fill();
 
-    // Double/Bloonjitsu gives golden shuriken in hand
-    const lv = tower.upgradeLevels || [0, 0, 0];
-    if (lv[0] >= 3) {
-      ctx.fillStyle = '#facc15';
+    // Sticky Time Bombs strapped to belt for bot >= 3
+    if (bot >= 3) {
+      ctx.fillStyle = '#ef4444'; // Red bomb canisters
+      ctx.fillRect(-tSize * 0.6, -tSize * 0.6, tSize * 0.28, tSize * 0.25);
+      ctx.fillRect(-tSize * 0.6, tSize * 0.35, tSize * 0.28, tSize * 0.25);
+    }
+
+    // Double/Bloonjitsu/Grandmaster gives golden shurikens in hand
+    if (top >= 3) {
+      ctx.fillStyle = '#fbbf24'; // pure golden shinier star
       ctx.beginPath();
-      ctx.arc(tSize * 0.5, tSize * 0.5, tSize * 0.22, 0, Math.PI * 2);
+      ctx.arc(tSize * 0.5, tSize * 0.5, tSize * 0.24, 0, Math.PI * 2);
       ctx.fill();
     }
 
   } else if (tower.type === 'glue') {
     // Glue Gunner (Yellow protective hazmat suit/hood)
     ctx.rotate(angle);
-    ctx.fillStyle = '#eab308'; // Bright yellow safety suit
+    ctx.fillStyle = top >= 3 ? '#22c55e' : bot >= 3 ? '#1d4ed8' : '#eab308'; // Corrosive Solver green, MOAB blue, or safety yellow
     ctx.beginPath();
     ctx.arc(-tSize * 0.1, 0, tSize * 1.0, 0, Math.PI * 2);
     ctx.fill();
 
     // Glass visor
-    ctx.fillStyle = '#38bdf8'; // Blue glass
+    ctx.fillStyle = top >= 3 ? '#a7f3d0' : '#38bdf8'; // light toxic green or blue glass
     ctx.beginPath();
-    ctx.ellipse(tSize * 0.28, 0, tSize * 0.4, tSize * 0.45, 0, 0, Math.PI * 2);
+    ctx.ellipse(tSize * 0.28, 0, tSize * 0.4, tSize * 0.52, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#eab308';
+    ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Glue hose weapon (Green nozzle)
+    // Glue hose weapon (With double nozzles if mid >= 3)
     ctx.fillStyle = '#475569';
-    ctx.fillRect(tSize * 0.4, tSize * 0.2, tSize * 0.7, tSize * 0.3);
-    ctx.fillStyle = '#22c55e'; // Green lime glue tip
-    ctx.fillRect(tSize * 1.05, tSize * 0.18, tSize * 0.15, tSize * 0.34);
+    if (mid >= 3) {
+      // Dual hose nozzles
+      ctx.fillRect(tSize * 0.4, tSize * 0.26, tSize * 0.72, tSize * 0.2);
+      ctx.fillRect(tSize * 0.4, -tSize * 0.46, tSize * 0.72, tSize * 0.2);
+      ctx.fillStyle = '#65a30d'; // adhesive lime tips
+      ctx.fillRect(tSize * 1.08, tSize * 0.23, tSize * 0.15, tSize * 0.26);
+      ctx.fillRect(tSize * 1.08, -tSize * 0.49, tSize * 0.15, tSize * 0.26);
+    } else {
+      ctx.fillRect(tSize * 0.4, tSize * 0.2, tSize * 0.7, tSize * 0.3);
+      ctx.fillStyle = top >= 3 ? '#65a30d' : bot >= 3 ? '#2563eb' : '#22c55e'; // Acid lime green or MOAB glue blue
+      ctx.fillRect(tSize * 1.05, tSize * 0.18, tSize * 0.15, tSize * 0.34);
+    }
+
+    // Heavy chemical canisters on back
+    ctx.fillStyle = top >= 3 ? '#166534' : bot >= 3 ? '#1e40af' : '#ca8a04';
+    ctx.fillRect(-tSize * 0.82, -tSize * 0.52, tSize * 0.35, tSize * 1.04);
 
   } else if (tower.type === 'wizard') {
     // Monkey Wizard (Arcane purple robes, gold star hat)
     ctx.rotate(angle);
-    ctx.fillStyle = '#6d28d9'; // Arcane Purple robe
+    ctx.fillStyle = top >= 3 ? '#1e1b4b' : mid >= 3 ? '#c2410c' : '#6d28d9'; // Archmage navy, fire orange, or arcane purple robe
     ctx.beginPath();
     ctx.arc(-tSize * 0.2, 0, tSize * 0.95, 0, Math.PI * 2);
     ctx.fill();
 
+    // Flame wings behind back for Dragon's Breath (mid >= 3)
+    if (mid >= 3) {
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 0.4, -tSize * 0.35);
+      ctx.quadraticCurveTo(-tSize * 1.8, -tSize * 0.85, -tSize * 1.25, -tSize * 0.12);
+      ctx.lineTo(-tSize * 0.4, -tSize * 0.12);
+      ctx.moveTo(-tSize * 0.4, tSize * 0.35);
+      ctx.quadraticCurveTo(-tSize * 1.8, tSize * 0.85, -tSize * 1.25, tSize * 0.12);
+      ctx.lineTo(-tSize * 0.4, tSize * 0.12);
+      ctx.closePath();
+      ctx.fill();
+    }
+
     // Gold star on robe
-    ctx.fillStyle = '#facc15';
+    ctx.fillStyle = top >= 3 ? '#ea580c' : '#facc15';
     ctx.beginPath();
     ctx.arc(-tSize * 0.2, tSize * 0.5, tSize * 0.15, 0, Math.PI * 2);
     ctx.fill();
@@ -1033,8 +1385,19 @@ export function drawTower(
     ctx.ellipse(tSize * 0.1, 0, tSize * 0.6, tSize * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // Ancient White Beard for Archmage (top >= 3)
+    if (top >= 3) {
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 0.28, tSize * 0.32);
+      ctx.quadraticCurveTo(tSize * 0.65, tSize * 0.68, tSize * 0.72, 0);
+      ctx.quadraticCurveTo(tSize * 0.65, -tSize * 0.68, -tSize * 0.28, -tSize * 0.32);
+      ctx.closePath();
+      ctx.fill();
+    }
+
     // Star pointed hat drawing
-    ctx.fillStyle = '#4c1d95'; // Deep violet hat
+    ctx.fillStyle = top >= 3 ? '#1e152a' : mid >= 3 ? '#ea580c' : '#4c1d95'; // Deep matching hats
     ctx.beginPath();
     ctx.moveTo(-tSize * 0.6, -tSize * 0.6);
     ctx.lineTo(-tSize * 1.45, 0); // pointing backwards
@@ -1042,17 +1405,33 @@ export function drawTower(
     ctx.closePath();
     ctx.fill();
 
-    // Glowing magic aura hands
-    ctx.fillStyle = '#60a5fa'; // Blue mana
-    ctx.beginPath();
-    ctx.arc(tSize * 0.52, -tSize * 0.35, tSize * 0.25, 0, Math.PI * 2);
-    ctx.arc(tSize * 0.52, tSize * 0.35, tSize * 0.25, 0, Math.PI * 2);
-    ctx.fill();
+    // Staff or hand glowing colors
+    if (top >= 3) {
+      // Tall golden mystic staff
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.4, -tSize * 0.82);
+      ctx.lineTo(tSize * 0.4, tSize * 0.82);
+      ctx.stroke();
+      
+      ctx.fillStyle = '#bae6fd'; // Staff crystal tip
+      ctx.beginPath();
+      ctx.arc(tSize * 0.4, -tSize * 0.85, tSize * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Glowing magic aura hands
+      ctx.fillStyle = mid >= 3 ? '#ea580c' : bot >= 3 ? '#22c55e' : '#60a5fa'; // orange, green (Necromancer), or magic blue
+      ctx.beginPath();
+      ctx.arc(tSize * 0.52, -tSize * 0.35, tSize * 0.25, 0, Math.PI * 2);
+      ctx.arc(tSize * 0.52, tSize * 0.35, tSize * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
   } else if (tower.type === 'alchemist') {
     // Alchemist (Purple wizard-like coat, throwing beaker flask)
     ctx.rotate(angle);
-    ctx.fillStyle = '#1e1b4b'; // Indigo coat
+    ctx.fillStyle = top >= 3 ? '#991b1b' : bot >= 3 ? '#d97706' : '#1e1b4b'; // red-brown for Berserker, gold for Lead-to-Gold, or standard indigo coat
     ctx.beginPath();
     ctx.arc(-tSize * 0.2, 0, tSize * 0.95, 0, Math.PI * 2);
     ctx.fill();
@@ -1072,46 +1451,69 @@ export function drawTower(
     ctx.stroke();
 
     // Beaker potion flask in hand
-    ctx.fillStyle = '#22c55e'; // bubbling lime green acid
+    ctx.fillStyle = top >= 3 ? '#ef4444' : bot >= 3 ? '#fbbf24' : '#22c55e'; // red-stew, sparkling gold, or bubbling acid
     ctx.beginPath();
     ctx.arc(tSize * 0.55, tSize * 0.45, tSize * 0.25, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#ffffff'; // glass neck
     ctx.fillRect(tSize * 0.45, tSize * 0.18, tSize * 0.2, tSize * 0.12);
 
+    // Cauldron back strap for Berserker Brew (top >= 3)
+    if (top >= 3) {
+      ctx.fillStyle = '#3f3f46';
+      ctx.fillRect(-tSize * 0.88, -tSize * 0.42, tSize * 0.45, tSize * 0.84);
+      ctx.fillStyle = '#ef4444'; // bubbling red potion froth
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.65, -tSize * 0.4, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
   } else if (tower.type === 'druid') {
     // Druid (Brown fur, green leafy crown cloak, glowing nature yellow eyes)
     ctx.rotate(angle);
-    ctx.fillStyle = '#15803d'; // Green foliage crown
+    
+    // Changing colors based on Avatar of Wrath (bot >= 3) or Spirit of Forest (mid >= 3)
+    ctx.fillStyle = bot >= 3 ? '#991b1b' : mid >= 3 ? '#166534' : '#15803d'; // Volcano Red, Forest Green, or standard Green foliage crown
     ctx.beginPath();
     ctx.arc(-tSize * 0.2, 0, tSize * 1.0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#78350f'; // Dark woodsy fur
+    ctx.fillStyle = bot >= 3 ? '#18181b' : '#78350f'; // Charcoal / Dark brown woodsy fur
     ctx.beginPath();
     ctx.arc(-tSize * 0.3, 0, tSize * 0.75, 0, Math.PI * 2);
     ctx.fill();
 
     // Face skin
-    ctx.fillStyle = '#fdba74';
+    ctx.fillStyle = bot >= 3 ? '#7f1d1d' : '#fdba74'; // Angry reddish face skin or Peach skin
     ctx.beginPath();
     ctx.ellipse(tSize * 0.05, 0, tSize * 0.6, tSize * 0.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Glowing nature yellow eyes
-    ctx.fillStyle = '#facc15';
+    // Glowing nature eyes (Angry Red fire for bot >= 3)
+    ctx.fillStyle = bot >= 3 ? '#f87171' : top >= 3 ? '#60a5fa' : '#facc15'; // Red, lightning electric blue, or Yellow
     ctx.beginPath();
     ctx.arc(tSize * 0.18, -tSize * 0.12, tSize * 0.1, 0, Math.PI * 2);
     ctx.arc(tSize * 0.18, tSize * 0.12, tSize * 0.1, 0, Math.PI * 2);
     ctx.fill();
 
-    // Branch thorn in hand
-    ctx.strokeStyle = '#b45309';
-    ctx.lineWidth = 3;
+    // Branch thorn / lightning spell wand in hand
+    ctx.strokeStyle = bot >= 3 ? '#f87171' : top >= 3 ? '#60a5fa' : '#b45309';
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
     ctx.moveTo(tSize * 0.3, tSize * 0.4);
     ctx.lineTo(tSize * 0.75, tSize * 0.7);
     ctx.stroke();
+
+    // Lightning sparkles around top spell wand (top >= 3)
+    if (top >= 3) {
+      ctx.strokeStyle = '#93c5fd';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(tSize * 0.75, tSize * 0.7);
+      ctx.lineTo(tSize * 0.95, tSize * 0.5);
+      ctx.lineTo(tSize * 0.6, tSize * 0.88);
+      ctx.stroke();
+    }
 
   } else if (tower.type === 'farm') {
     // Banana Farm: A cute wooden Cabin/Barn with a yellow bunch of Bananas on top
@@ -1119,81 +1521,150 @@ export function drawTower(
     ctx.rotate(wobble);
 
     // Barn roof/structure
-    ctx.fillStyle = '#b45309'; // brown wood walls
-    ctx.fillRect(-tSize * 1.1, -tSize * 1.1, tSize * 2.2, tSize * 1.9);
+    if (top >= 3) {
+      // Futuristic Research center: Sleek glass and silver solar frames
+      ctx.fillStyle = '#64748b'; // industrial slate
+      ctx.fillRect(-tSize * 1.15, -tSize * 1.15, tSize * 2.3, tSize * 2.0);
+      
+      ctx.fillStyle = '#38bdf8'; // glossy glass panels
+      ctx.fillRect(-tSize * 0.9, -tSize * 0.9, tSize * 1.8, tSize * 0.7);
+    } else if (mid >= 3) {
+      // Golden brick banking vault!
+      ctx.fillStyle = '#d97706'; // gold-amber
+      ctx.fillRect(-tSize * 1.1, -tSize * 1.1, tSize * 2.2, tSize * 1.9);
+      
+      ctx.fillStyle = '#eab308'; // shining vault front door
+      ctx.beginPath();
+      ctx.arc(0, tSize * 0.1, tSize * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // standard wooden cabin
+      ctx.fillStyle = '#b45309'; // brown wood walls
+      ctx.fillRect(-tSize * 1.1, -tSize * 1.1, tSize * 2.2, tSize * 1.9);
 
-    ctx.fillStyle = '#dc2626'; // cute red barn roof
-    ctx.beginPath();
-    ctx.moveTo(-tSize * 1.3, -tSize * 1.1);
-    ctx.lineTo(0, -tSize * 1.85);
-    ctx.lineTo(tSize * 1.3, -tSize * 1.1);
-    ctx.closePath();
-    ctx.fill();
+      ctx.fillStyle = '#dc2626'; // cute red barn roof
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 1.3, -tSize * 1.1);
+      ctx.lineTo(0, -tSize * 1.85);
+      ctx.lineTo(tSize * 1.3, -tSize * 1.1);
+      ctx.closePath();
+      ctx.fill();
+    }
 
-    // Cute green tree shrub details around it
-    ctx.fillStyle = '#22c55e';
-    ctx.beginPath();
-    ctx.arc(-tSize * 1.0, tSize * 0.6, tSize * 0.5, 0, Math.PI * 2);
-    ctx.arc(tSize * 1.0, tSize * 0.6, tSize * 0.5, 0, Math.PI * 2);
-    ctx.fill();
+    // Cute green tree shrub details around it (unless research center)
+    if (top < 3) {
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(-tSize * 1.0, tSize * 0.6, tSize * 0.5, 0, Math.PI * 2);
+      ctx.arc(tSize * 1.0, tSize * 0.6, tSize * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Sweet Banana bunch sign inside!
     ctx.fillStyle = '#facc15'; // banana bunch gold
     ctx.beginPath();
-    ctx.arc(0, -tSize * 0.2, tSize * 0.45, 0, Math.PI * 2);
+    ctx.arc(0, top >= 3 ? -tSize * 0.45 : -tSize * 0.2, tSize * 0.45, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#854d0e';
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    
+    // Draw pile of coin crates for bot >= 3 (Marketplace)
+    if (bot >= 3) {
+      ctx.fillStyle = '#fbbf24'; // gold coin stack
+      ctx.fillRect(-tSize * 0.6, tSize * 0.4, tSize * 0.35, tSize * 0.35);
+      ctx.fillRect(tSize * 0.25, tSize * 0.4, tSize * 0.35, tSize * 0.35);
+    }
 
   } else if (tower.type === 'sub') {
     // Submarine: sleek yellow/blue capsule hull, a rotating periscope
     ctx.rotate(angle);
-    ctx.fillStyle = '#0284c7'; // Sea blue water capsule
+    ctx.fillStyle = top >= 3 ? '#10b981' : bot >= 3 ? '#334155' : '#0284c7'; // Nuclear high-tech green, stealth carbon grey, or Sea blue
     ctx.beginPath();
     ctx.ellipse(0, 0, tSize * 1.6, tSize * 0.82, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#bae6fd';
+    ctx.strokeStyle = top >= 3 ? '#a7f3d0' : '#bae6fd';
     ctx.lineWidth = 3;
     ctx.stroke();
 
+    // Reactor dome for Energizer (top >= 3)
+    if (top >= 3) {
+      ctx.fillStyle = '#34d399'; // glowing reactor ring
+      ctx.beginPath();
+      ctx.arc(-tSize * 0.5, 0, tSize * 0.44, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // Sub hatch/window dome
-    ctx.fillStyle = '#38bdf8'; // glossy sky-400 glass window
+    ctx.fillStyle = top >= 3 ? '#6ee7b7' : '#38bdf8'; // glossy radioactive or sky-400 glass window
     ctx.beginPath();
     ctx.arc(tSize * 0.2, 0, tSize * 0.48, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#0284c7';
+    ctx.strokeStyle = top >= 3 ? '#047857' : '#0284c7';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
+    // Silo doors opened showing bright red missile tip for Ballistic (mid >= 3)
+    if (mid >= 3) {
+      ctx.fillStyle = '#ef4444'; // missile tip
+      ctx.fillRect(-tSize * 0.9, -tSize * 0.22, tSize * 0.3, tSize * 0.44);
+      ctx.strokeStyle = '#fca5a5';
+      ctx.strokeRect(-tSize * 0.9, -tSize * 0.22, tSize * 0.3, tSize * 0.44);
+    }
+
     // Sonar antenna/Periscope pointing towards target
-    ctx.fillStyle = '#ef4444'; // red tip
+    ctx.fillStyle = bot >= 3 ? '#fbbf24' : '#ef4444'; // Captain yellow or red tip
     ctx.fillRect(-tSize * 0.6, -tSize * 0.15, tSize * 0.35, tSize * 0.3);
 
   } else if (tower.type === 'buccaneer') {
     // Buccaneer Ship: brown catamaran hull, white piracy sails, grape cannons
     ctx.rotate(angle);
-    ctx.fillStyle = '#78350f'; // Dark ship deck wood
+    
+    // Changing body styling
+    ctx.fillStyle = top >= 3 ? '#475569' : bot >= 3 ? '#ca8a04' : '#78350f'; // Battleship grey, merchant golden-brown, or classic dark deck wood
     ctx.beginPath();
     ctx.moveTo(-tSize * 1.6, -tSize * 0.85);
     ctx.lineTo(tSize * 1.5, 0); // Pointy bow
     ctx.lineTo(-tSize * 1.6, tSize * 0.85);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#451a03';
+    ctx.strokeStyle = top >= 3 ? '#334155' : '#451a03';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // White Sail in the center
-    ctx.fillStyle = '#f8fafc';
-    ctx.beginPath();
-    ctx.ellipse(-tSize * 0.25, 0, tSize * 0.38, tSize * 0.65, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (top >= 3) {
+      // Draw flat concrete runway strip for Carrier Flagship
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-tSize * 1.1, -tSize * 0.42, tSize * 2.2, tSize * 0.84);
+      
+      // Runway light guides
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(-tSize * 1.1, 0);
+      ctx.lineTo(tSize * 1.1, 0);
+      ctx.stroke();
+      ctx.setLineDash([]); // clear dash style
+    } else {
+      // White Sail in the center (Jolly Roger black sails for Pirate Lord mid >= 3)
+      ctx.fillStyle = mid >= 3 ? '#0f172a' : '#f8fafc';
+      ctx.beginPath();
+      ctx.ellipse(-tSize * 0.25, 0, tSize * 0.38, tSize * 0.65, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Pirate skull detail logo
-    ctx.fillStyle = '#0f172a';
-    ctx.font = `bold ${Math.round(tSize * 0.4)}px sans-serif`;
-    ctx.fillText('☠', -tSize * 0.25, 0);
+      // Pirate skull detail logo
+      ctx.fillStyle = mid >= 3 ? '#f1f5f9' : '#0f172a';
+      ctx.font = `bold ${Math.round(tSize * 0.4)}px sans-serif`;
+      ctx.fillText('☠', -tSize * 0.25, 0);
+    }
+
+    // Stack money boxes on deck for Merchant (bot >= 3)
+    if (bot >= 3) {
+      ctx.fillStyle = '#fbbf24'; // coins chest
+      ctx.fillRect(-tSize * 0.35, tSize * 0.25, tSize * 0.32, tSize * 0.32);
+      ctx.strokeRect(-tSize * 0.35, tSize * 0.25, tSize * 0.32, tSize * 0.32);
+    }
 
   } else if (tower.type === 'pool') {
     // Portable Water Pool: a beautifully tiled blue circle filled with peaceful animated water ripples
@@ -1286,6 +1757,8 @@ export function drawProjectile(
   const minDim = Math.min(canvasWidth, canvasHeight);
   const sizeMult = minDim / 1000;
 
+  const [top, mid, bot] = proj.upgradeLevels || [0, 0, 0];
+
   ctx.save();
   ctx.translate(rx, ry);
 
@@ -1294,173 +1767,339 @@ export function drawProjectile(
   ctx.rotate(angle);
 
   if (proj.type === 'dart') {
-    // Wooden classic Dart with Red fletchings
-    ctx.fillStyle = '#d97706'; // Wood shaft
-    ctx.fillRect(-8, -1.5, 14, 3);
-    // Red tail feathers
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.moveTo(-11, -3.5);
-    ctx.lineTo(-5, -1.5);
-    ctx.lineTo(-11, 0);
-    ctx.lineTo(-5, 1.5);
-    ctx.lineTo(-11, 3.5);
-    ctx.lineTo(-8, 0);
-    ctx.closePath();
-    ctx.fill();
-    // Silver tip
-    ctx.fillStyle = '#e2e8f0';
-    ctx.beginPath();
-    ctx.moveTo(6, -2);
-    ctx.lineTo(13, 0);
-    ctx.lineTo(6, 2);
-    ctx.closePath();
-    ctx.fill();
+    if (top >= 3) {
+      // Juggernaut: Giant heavy spiked dark metal ball
+      ctx.fillStyle = '#374151';
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      
+      // Spikes
+      ctx.fillStyle = '#9ca3af';
+      for (let s = 0; s < Math.PI * 2; s += Math.PI / 4) {
+        ctx.save();
+        ctx.rotate(s);
+        ctx.beginPath();
+        ctx.moveTo(10, -2);
+        ctx.lineTo(15, 0);
+        ctx.lineTo(10, 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    } else if (mid >= 3) {
+      // High-speed cybertech metallic projectile with cyan trailing
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-12, -2, 20, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, -1, 12, 2);
+    } else if (bot >= 3) {
+      // Crossbow Bolt: Black heavy wooden bolt with violet feathers
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-10, -1.2, 18, 2.4);
+      ctx.fillStyle = '#a855f7'; // purple feathers
+      ctx.beginPath();
+      ctx.moveTo(-13, -3.5);
+      ctx.lineTo(-7, 0);
+      ctx.lineTo(-13, 3.5);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Wooden classic Dart with Red fletchings
+      ctx.fillStyle = '#d97706'; // Wood shaft
+      ctx.fillRect(-8, -1.5, 14, 3);
+      // Red tail feathers
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(-11, -3.5);
+      ctx.lineTo(-5, -1.5);
+      ctx.lineTo(-11, 0);
+      ctx.lineTo(-5, 1.5);
+      ctx.lineTo(-11, 3.5);
+      ctx.lineTo(-8, 0);
+      ctx.closePath();
+      ctx.fill();
+      // Silver tip
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(6, -2);
+      ctx.lineTo(13, 0);
+      ctx.lineTo(6, 2);
+      ctx.closePath();
+      ctx.fill();
+    }
 
   } else if (proj.type === 'tack') {
-    // Silver pointed small metal tack
-    ctx.fillStyle = '#94a3b8'; // silver gray
-    ctx.beginPath();
-    ctx.moveTo(-4, -4);
-    ctx.lineTo(8, 0);
-    ctx.lineTo(-4, 4);
-    ctx.closePath();
-    ctx.fill();
-    // Head of tack
-    ctx.fillStyle = '#db2777';
-    ctx.fillRect(-6, -3, 2, 6);
+    if (top >= 3) {
+      // Ring of Fire: hot orange plasma spark sphere
+      ctx.fillStyle = '#ff7849';
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffc82c';
+      ctx.beginPath();
+      ctx.arc(0, 0, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (mid >= 3) {
+      // High-tech hot pink titanium razor blade tack
+      ctx.fillStyle = '#ec4899';
+      ctx.beginPath();
+      ctx.moveTo(-7, -4);
+      ctx.lineTo(9, 0);
+      ctx.lineTo(-7, 4);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Silver pointed small metal tack
+      ctx.fillStyle = '#94a3b8'; // silver gray
+      ctx.beginPath();
+      ctx.moveTo(-4, -4);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(-4, 4);
+      ctx.closePath();
+      ctx.fill();
+      // Head of tack
+      ctx.fillStyle = '#db2777';
+      ctx.fillRect(-6, -3, 2, 6);
+    }
 
   } else if (proj.type === 'bomb') {
-    // Matte-black circular cannonball with sparkling fuse trailing sparks
-    ctx.fillStyle = '#111827';
-    ctx.beginPath();
-    ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#4b5563';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    if (top >= 3) {
+      // MOAB Mauler: Heavy spiked steel bomb shell with dark patterns
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(0, 0, 10.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#dc2626'; // aggressive red stripe
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (mid >= 3) {
+      // Missile: Sleek red rocket capsule with yellow rocket flame exhaust
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(-12, -4, 18, 8);
+      ctx.fillStyle = '#dc2626'; // nose cone
+      ctx.beginPath();
+      ctx.moveTo(6, -4);
+      ctx.lineTo(13, 0);
+      ctx.lineTo(6, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#facc15'; // yellow fire tail
+      ctx.fillRect(-18, -2, 6, 4);
+    } else {
+      // Matte-black circular cannonball with sparkling fuse trailing sparks
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#4b5563';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
-    // Fuse cord
-    ctx.strokeStyle = '#ea580c';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-3, -3);
-    ctx.bezierCurveTo(-9, -9, -4, -14, -8, -18);
-    ctx.stroke();
+      // Fuse cord
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-3, -3);
+      ctx.bezierCurveTo(-9, -9, -4, -14, -8, -18);
+      ctx.stroke();
 
-    // Little fuse sparkler
-    ctx.fillStyle = '#facc15';
-    ctx.beginPath();
-    ctx.arc(-8, -18, 3, 0, Math.PI * 2);
-    ctx.fill();
+      // Little fuse sparkler
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(-8, -18, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
   } else if (proj.type === 'bullet') {
-    // Ultra-fast golden metallic sniper round bullet
-    ctx.fillStyle = '#fbbf24'; // gold slug
-    ctx.fillRect(-10, -1.5, 16, 3);
-    // Back glow wind-trail
-    ctx.fillStyle = 'rgba(251, 191, 36, 0.35)';
-    ctx.fillRect(-22, -1, 12, 2);
+    if (top >= 3) {
+      // Armor piercing: Crimson-wrapped long uranium penetrator dart slug
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-14, -1.8, 22, 3.6);
+      ctx.fillStyle = '#fef08a'; // hot tip
+      ctx.fillRect(4, -1.8, 6, 3.6);
+    } else {
+      // Ultra-fast golden metallic sniper round bullet
+      ctx.fillStyle = '#fbbf24'; // gold slug
+      ctx.fillRect(-10, -1.5, 16, 3);
+      // Back glow wind-trail
+      ctx.fillStyle = 'rgba(251, 191, 36, 0.35)';
+      ctx.fillRect(-22, -1, 12, 2);
+    }
 
   } else if (proj.type === 'beam') {
-    // Super Monkey light rays plasma
-    ctx.fillStyle = '#22d3ee'; // bright cyan plasma tube
-    ctx.fillRect(-14, -3, 22, 6);
-    ctx.fillStyle = '#ffffff'; // hot center
-    ctx.fillRect(-10, -1.5, 15, 3);
-    
-    // Electric sparks around
-    ctx.strokeStyle = '#a5f3fc';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(8, -6);
-    ctx.lineTo(12, -2);
-    ctx.lineTo(6, 2);
-    ctx.stroke();
+    if (top >= 3) {
+      // Sun God Solar Ray: Brighter sunburst glowing gold core beam
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-16, -5, 26, 10);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-12, -2.5, 20, 5);
+    } else {
+      // Super Monkey light rays plasma
+      ctx.fillStyle = '#22d3ee'; // bright cyan plasma tube
+      ctx.fillRect(-14, -3, 22, 6);
+      ctx.fillStyle = '#ffffff'; // hot center
+      ctx.fillRect(-10, -1.5, 15, 3);
+      
+      // Electric sparks around
+      ctx.strokeStyle = '#a5f3fc';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(8, -6);
+      ctx.lineTo(12, -2);
+      ctx.lineTo(6, 2);
+      ctx.stroke();
+    }
+
   } else if (proj.type === 'boomerang') {
-    // Rotating boomerang shape
-    const rotTime = (Date.now() / 120);
+    const rotTime = (Date.now() / (top >= 3 ? 40 : 120));
     ctx.rotate(rotTime);
-    ctx.strokeStyle = '#fca5a5'; // reddish wood
-    ctx.fillStyle = '#f87171';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(-10, -5);
-    ctx.quadraticCurveTo(0, -14, 12, -4);
-    ctx.quadraticCurveTo(0, -2, -10, -5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+
+    if (top >= 3) {
+      // Glaive Lord: Spinning circular crimson razor sawblade
+      ctx.strokeStyle = '#b91c1c';
+      ctx.fillStyle = '#ef4444';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Blade teeth notches
+      ctx.fillStyle = '#f87171';
+      for (let side = 0; side < Math.PI * 2; side += Math.PI / 3) {
+        ctx.save();
+        ctx.rotate(side);
+        ctx.beginPath();
+        ctx.moveTo(11, -3);
+        ctx.lineTo(15, 0);
+        ctx.lineTo(11, 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    } else {
+      // Rotating boomerang shape
+      ctx.strokeStyle = '#fca5a5'; // reddish wood
+      ctx.fillStyle = '#f87171';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-10, -5);
+      ctx.quadraticCurveTo(0, -14, 12, -4);
+      ctx.quadraticCurveTo(0, -2, -10, -5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
 
   } else if (proj.type === 'shuriken') {
-    // Sharp rotating ninja star
     const rotTime = (Date.now() / 45);
     ctx.rotate(rotTime);
-    ctx.fillStyle = '#94a3b8'; // silver
+
+    // Color based on active upgrade paths (golden for top >= 3)
+    ctx.fillStyle = top >= 3 ? '#fbbf24' : '#94a3b8';
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
-      ctx.rotate(Math.PI / 2);
-      ctx.lineTo(0, -9);
-      ctx.lineTo(2.5, -2.5);
+        ctx.rotate(Math.PI / 2);
+        ctx.lineTo(0, top >= 3 ? -11 : -9);
+        ctx.lineTo(2.5, -2.5);
     }
     ctx.closePath();
     ctx.fill();
+    
     // Center point
-    ctx.fillStyle = '#cbd5e1';
+    ctx.fillStyle = top >= 3 ? '#ffffff' : '#cbd5e1';
     ctx.beginPath();
-    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 2.8, 0, Math.PI * 2);
     ctx.fill();
 
   } else if (proj.type === 'glue') {
-    // Gooey yellow acid glob
-    ctx.fillStyle = '#facc15';
+    // Corrosive Lime Solver Green for top >= 3, blue for bot >= 3, else standard yellow
+    ctx.fillStyle = top >= 3 ? '#22c55e' : bot >= 3 ? '#2563eb' : '#facc15';
     ctx.beginPath();
-    ctx.arc(0, 0, 5, 0, Math.PI * 2);
-    ctx.arc(-3, 1, 3, 0, Math.PI * 2);
-    ctx.arc(2.5, -2, 2.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+    ctx.arc(-3.2, 1, 3.2, 0, Math.PI * 2);
+    ctx.arc(2.8, -2, 2.8, 0, Math.PI * 2);
     ctx.fill();
 
   } else if (proj.type === 'magic') {
-    // Glowing mystic mana ray
-    ctx.fillStyle = '#a78bfa'; // violet
-    ctx.beginPath();
-    ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#e9d5ff';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
+    if (top >= 3) {
+      // Archmage energy sphere leaving purple magic smoke
+      ctx.fillStyle = '#bae6fd'; // sky crystal ball
+      ctx.beginPath();
+      ctx.arc(0, 0, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else if (mid >= 3) {
+      // Dragons breath hot plasma sphere
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(0, 0, 9.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(1.5, 0, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Glowing mystic mana ray
+      ctx.fillStyle = '#a78bfa'; // violet
+      ctx.beginPath();
+      ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#e9d5ff';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
 
   } else if (proj.type === 'potion') {
-    // Bubble potion beaker
-    ctx.fillStyle = '#a855f7'; // purple glass
+    // Berserker crimson-orange flask for top >= 3, gold for bot, or acid bubbling green
+    ctx.fillStyle = top >= 3 ? '#f87171' : bot >= 3 ? '#fcd34d' : '#818cf8'; // bottle cap/glass outline
     ctx.fillRect(-3, -7, 6, 4);
-    ctx.fillStyle = '#22c55e'; // green liquid
+    
+    ctx.fillStyle = top >= 3 ? '#dc2626' : bot >= 3 ? '#fbbf24' : '#22c55e'; // red-steroid, gold molten, or lime acid
     ctx.beginPath();
-    ctx.arc(0, 2, 7, 0, Math.PI * 2);
+    ctx.arc(0, 2, 7.5, 0, Math.PI * 2);
     ctx.fill();
 
   } else if (proj.type === 'thorn') {
-    // Wooden spike needle
-    ctx.strokeStyle = '#854d0e'; // dark yellow wood
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-7, 0);
-    ctx.lineTo(8, 0);
-    ctx.stroke();
+    if (top >= 3) {
+        // Lightning bolt needle spark
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-10, -5);
+        ctx.lineTo(2, 2);
+        ctx.lineTo(12, -4);
+        ctx.stroke();
+    } else {
+        // Wooden spike needle
+        ctx.strokeStyle = '#854d0e'; // dark yellow wood
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-7, 0);
+        ctx.lineTo(8, 0);
+        ctx.stroke();
+    }
 
   } else if (proj.type === 'grape') {
-    // Purplish cluster shotgun grape pellet
-    ctx.fillStyle = '#818cf8'; // indigo-purple grape
+    // Big hot grape blast
+    ctx.fillStyle = mid >= 3 ? '#ea580c' : '#818cf8'; // Flaming orange or violet grapes
     ctx.beginPath();
-    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
     ctx.fill();
     // Tiny white highlight dot
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(-1.5, -1.5, 1.2, 0, Math.PI * 2);
+    ctx.arc(-1.5, -1.5, 1.3, 0, Math.PI * 2);
     ctx.fill();
   }
-
   ctx.restore();
 }
 

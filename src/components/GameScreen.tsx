@@ -71,7 +71,7 @@ interface GameScreenProps {
   mapId: string;
   heroType: string;
   difficulty: Difficulty;
-  gameMode: 'campaign' | 'endless';
+  gameMode: 'campaign' | 'endless' | 'sandbox';
   startingCashBonus: number;
   discountPercent: number;
   extraLivesBonus: number;
@@ -132,6 +132,118 @@ function getIncomeMultiplier(r: number): number {
   return 0.02;               // After round 121 (2% value)
 }
 
+// Map tower to its current BTD6 damage type based on installed upgrade paths
+export function getTowerDamageType(t: Tower, heroId: string): 'sharp' | 'explosive' | 'cold' | 'magic' | 'plasma' | 'acid' | 'normal' {
+  const lv = t.upgradeLevels || [0, 0, 0];
+  
+  switch (t.type) {
+    case 'dart':
+      if (lv[0] >= 3) return 'normal'; // Spike-o-pult / Juggernaut
+      if (lv[1] >= 5) return 'plasma'; // Plasma Fan Club
+      return 'sharp';
+      
+    case 'tack':
+      if (lv[0] >= 3) return 'normal'; // Hot Shots / Ring of Fire / Inferno fire normal
+      return 'sharp';
+      
+    case 'sniper':
+      if (lv[0] >= 2) return 'normal'; // Full Metal Jacket / Deadly Precision
+      return 'sharp';
+      
+    case 'bomb':
+      return 'explosive';
+      
+    case 'ice':
+      if (lv[0] >= 4) return 'normal'; // Embrittlement/Super Brittle normal ice
+      return 'cold';
+      
+    case 'super':
+      if (lv[0] >= 4) return 'normal'; // Sun Temple / True Sun God
+      if (lv[0] >= 2 || lv[2] >= 2) return 'plasma'; // Plasma Blaster, Ultravision Plasma
+      if (lv[0] === 1) return 'magic'; // Lasers can pop frozen, block on purple, not lead
+      return 'sharp';
+      
+    case 'boomerang':
+      if (lv[1] >= 2) return 'normal'; // Red Hot Rangs melts lead & frozen
+      return 'sharp';
+      
+    case 'ninja':
+      return 'sharp';
+      
+    case 'glue':
+      return 'acid';
+      
+    case 'wizard':
+      if (lv[0] >= 3 || lv[1] >= 3) return 'normal'; // Fireball, Dragon's Breath normal
+      return 'magic';
+      
+    case 'alchemist':
+      return 'acid';
+      
+    case 'druid':
+      if (lv[1] >= 3) return 'normal'; // Druid of the Jungle
+      return 'sharp';
+      
+    case 'sub':
+      if (lv[1] >= 2) return 'normal'; // Heat-Tipped Darts
+      return 'sharp';
+      
+    case 'buccaneer':
+      if (lv[0] >= 4 || lv[1] >= 2) return 'normal'; // Aircraft Carrier / Grape hot shots
+      return 'sharp';
+      
+    case 'hero':
+      if (heroId === 'gwendolin') return 'normal';
+      if (heroId === 'obyn') return 'magic';
+      if (heroId === 'quincy' && t.level >= 10) return 'normal';
+      return 'sharp';
+      
+    default:
+      return 'sharp';
+  }
+}
+
+// BTD6 Unified Immunity and collision permission matrix
+export function canAttackBloon(
+  damageType: 'sharp' | 'explosive' | 'cold' | 'magic' | 'plasma' | 'acid' | 'normal',
+  bloonType: string,
+  isFrozen: boolean
+): boolean {
+  if (bloonType === 'BAD') return true; // Boss is susceptible to everything!
+  
+  // 1. Lead Immunity (Immune to Sharp and Cold)
+  if (bloonType === 'Lead') {
+    if (damageType === 'sharp' || damageType === 'cold') return false;
+  }
+  
+  // 2. Frozen state (Immune to Sharp physical attacks)
+  if (isFrozen) {
+    if (damageType === 'sharp') return false;
+  }
+  
+  // 3. Black, Zebra and DDT Immunity to Explosive damage
+  if (bloonType === 'Black' || bloonType === 'Zebra' || bloonType === 'DDT') {
+    if (damageType === 'explosive') return false;
+  }
+  
+  // 4. White and Zebra Immunity to Cold freezing damage
+  if (bloonType === 'White' || bloonType === 'Zebra') {
+    if (damageType === 'cold') return false;
+  }
+  
+  // 5. Purple Immunity to magical energy / plasma beams
+  if (bloonType === 'Purple') {
+    if (damageType === 'magic' || damageType === 'plasma') return false;
+  }
+  
+  // 6. DDT has Lead elements (Immune to Sharp)
+  if (bloonType === 'DDT') {
+    if (damageType === 'sharp') return false;
+  }
+  
+  return true;
+}
+
 export const GameScreen: React.FC<GameScreenProps> = ({
   mapId,
   heroType,
@@ -162,16 +274,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const actualDiscountPercent = difficulty === 'CHIMPS' ? 0 : discountPercent;
     const discounted = baseCost * (1 - actualDiscountPercent / 100);
     let factor = 1.0;
-    if (difficulty === 'Easy') factor = 0.85;
+    if (difficulty === 'Easy') factor = 0.75; // lowered from 0.85
     if (difficulty === 'Hard' || difficulty === 'CHIMPS') factor = 1.2;
     return Math.round(discounted * factor);
   };
 
   const [cash, setCash] = useState<number>(() => {
     let base = 650;
-    if (difficulty === 'Easy') base = 850; // Easy gets more starting cash!
-    if (difficulty === 'Medium') base = 650;
-    if (difficulty === 'Hard') base = 650; // CHIMPS & Hard matches standard $650 starting cash
+    if (difficulty === 'Easy') base = 1000; // was 850
+    if (difficulty === 'Medium') base = 800; // was 650
+    if (difficulty === 'Hard') base = 700; // was 650
     if (difficulty === 'CHIMPS') base = 650;
     const actualStartingCashBonus = difficulty === 'CHIMPS' ? 0 : startingCashBonus;
     return base + actualStartingCashBonus;
@@ -180,16 +292,63 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   const [lives, setLives] = useState<number>(() => {
     if (difficulty === 'CHIMPS') return 1; // 1 HP only (No Hearts Lost)
     let base = 150;
-    if (difficulty === 'Easy') base = 200; // Easy gets 200 lives!
-    if (difficulty === 'Medium') base = 150; // Medium gets 150 lives!
-    if (difficulty === 'Hard') base = 100; // Hard gets 100 lives!
+    if (difficulty === 'Easy') base = 250; // was 200
+    if (difficulty === 'Medium') base = 180; // was 150
+    if (difficulty === 'Hard') base = 120; // was 100
     const actualExtraLivesBonus = difficulty === 'CHIMPS' ? 0 : extraLivesBonus;
     return base + actualExtraLivesBonus;
   });
 
+  // Sandbox spawners
+  const spawnSingleBloon = (type: string, isCamo = false, isRegrow = false, isFortified = false) => {
+    const spec = getBloonStyle(type as any);
+    const pathStart = selectedMap.track[0];
+    if (!pathStart) return;
+
+    let speedMultiplierByDiff = 1.0;
+    if (difficulty === 'Easy') speedMultiplierByDiff = 0.85;
+    else if (difficulty === 'Hard' || difficulty === 'CHIMPS') speedMultiplierByDiff = 1.15;
+
+    const lateScale = getLateGameMultiplier(round);
+    const initialHp = (isFortified ? (type === 'Lead' ? spec.hp * 4 : spec.hp * 2) : spec.hp) * lateScale.hp;
+
+    const inst: Bloon = {
+      id: `sandbox_bloon_${Date.now()}_${Math.random()}`,
+      type: type as any,
+      x: pathStart.x,
+      y: pathStart.y,
+      speed: spec.speed * speedMultiplierByDiff * lateScale.speed,
+      hp: initialHp,
+      maxHp: initialHp,
+      size: spec.size,
+      color: spec.color,
+      reward: spec.reward,
+      distanceTraversed: 0,
+      pathSegmentIndex: 0,
+      segmentProgress: 0,
+      isFrozen: false,
+      freezeTimer: 0,
+      isSlowed: false,
+      slowTimer: 0,
+      isCeramic: type === 'Ceramic',
+      isMoab: ['MOAB', 'BFB', 'ZOMG', 'DDT', 'BAD'].includes(type),
+      isCamo: isCamo,
+      isRegrow: isRegrow,
+      isFortified: isFortified,
+    };
+
+    bloonsRef.current.push(inst);
+  };
+
   const [round, setRound] = useState<number>(1);
   const [roundInProgress, setRoundInProgress] = useState<boolean>(false);
   const [autoPlay, setAutoPlay] = useState<boolean>(false);
+
+  // Sandbox mode controller states
+  const [sandboxTab, setSandboxTab] = useState<'spawn' | 'cheats'>('spawn');
+  const [sandboxCamo, setSandboxCamo] = useState<boolean>(false);
+  const [sandboxRegrow, setSandboxRegrow] = useState<boolean>(false);
+  const [sandboxFortified, setSandboxFortified] = useState<boolean>(false);
   
   // Infinite play & victory milestones
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
@@ -239,7 +398,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const discounted = base * (1 - actualDiscountPercent / 100);
     // Easy: 15% off, Medium: 1.0, Hard/CHIMPS: 1.2x
     let factor = 1.0;
-    if (difficulty === 'Easy') factor = 0.85;
+    if (difficulty === 'Easy') factor = 0.75;
     if (difficulty === 'Hard' || difficulty === 'CHIMPS') factor = 1.2;
     return Math.round(discounted * factor);
   };
@@ -445,8 +604,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       range: selectedShopTower === 'hero' ? 140 : TOWER_STATS[selectedShopTower].baseRange,
       baseCooldown: selectedShopTower === 'hero' ? 45 : TOWER_STATS[selectedShopTower].baseCooldown,
       cooldown: 0,
-      damage: 1,
-      pierce: selectedShopTower === 'tack' ? 1 : 2,
+      damage: selectedShopTower === 'hero' ? 1 : TOWER_STATS[selectedShopTower].baseDamage,
+      pierce: selectedShopTower === 'hero' ? 2 : TOWER_STATS[selectedShopTower].basePierce,
       cost: actualCost,
       popCount: 0,
       targetMode: 'First',
@@ -854,17 +1013,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           } else {
             // Leakage! Bloon has fully traversed the track list and escaped
             const leakDamage = b.isMoab ? 40 : b.maxHp;
-            setLives((curr) => {
-              const remaining = curr - leakDamage;
-              if (remaining <= 0) {
-                // Defeat triggered!
-                setIsGameOverOrFinished(true);
-                assessAchievementProgress('round_40', round); // track round max on fail as progress
-                onGameOver(round - 1, Math.min(600, round * 12), totalPopCount);
-                return 0;
-              }
-              return remaining;
-            });
+            if (gameMode !== 'sandbox') {
+              setLives((curr) => {
+                const remaining = curr - leakDamage;
+                if (remaining <= 0) {
+                  // Defeat triggered!
+                  setIsGameOverOrFinished(true);
+                  assessAchievementProgress('round_40', round); // track round max on fail as progress
+                  onGameOver(round - 1, Math.min(600, round * 12), totalPopCount);
+                  return 0;
+                }
+                return remaining;
+              });
+            }
 
             // Splat sound on leak
             playExplosion();
@@ -964,6 +1125,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             // Special Sniper logic: Instantly hit target (no projectile delay!)
             if (t.type === 'sniper') {
               playSniperShoot();
+              
+              const dmgType = getTowerDamageType(t, heroType);
+              if (!canAttackBloon(dmgType, target.type, target.isFrozen)) {
+                floatingTextsRef.current.push({
+                  id: `imm_${Date.now()}`,
+                  x: target.x,
+                  y: target.y - 15,
+                  text: 'Immune!',
+                  color: '#f87171',
+                  life: 15,
+                });
+                t.cooldown = t.baseCooldown;
+                return;
+              }
+
               damageAndPopBloon(target, t.damage, t);
               // Cripple shot slow
               const upgL = t.upgradesPurchased;
@@ -991,6 +1167,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   damage: t.damage,
                   pierce: t.pierce,
                   rangeRemaining: t.range,
+                  damageType: getTowerDamageType(t, heroType),
+                  upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
               }
               t.cooldown = t.baseCooldown;
@@ -1051,6 +1229,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   damage: t.damage,
                   pierce: t.pierce,
                   rangeRemaining: t.range,
+                  damageType: getTowerDamageType(t, heroType),
+                  upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
               }
               t.cooldown = t.baseCooldown;
@@ -1074,6 +1254,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   damage: t.damage,
                   pierce: t.pierce,
                   rangeRemaining: t.range,
+                  damageType: getTowerDamageType(t, heroType),
+                  upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
               }
               t.cooldown = t.baseCooldown;
@@ -1098,6 +1280,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   damage: t.damage,
                   pierce: t.pierce,
                   rangeRemaining: t.range,
+                  damageType: getTowerDamageType(t, heroType),
+                  upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
                 });
               }
               t.cooldown = t.baseCooldown;
@@ -1158,6 +1342,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               splashRadius: splash,
               targetBloonId: (t.type === 'sub') ? target.id : undefined, // submarine uses homing
               rangeRemaining: t.range,
+              damageType: getTowerDamageType(t, heroType),
+              upgradeLevels: t.upgradeLevels ? [...t.upgradeLevels] : [0, 0, 0],
             });
 
             t.cooldown = t.baseCooldown;
@@ -1262,21 +1448,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                   b.isSlowed = false;
                 }
 
-                const isSharp = ['dart', 'tack', 'boomerang', 'shuriken', 'thorn', 'bullet', 'grape'].includes(p.type);
-
-                if ((b.type === 'Black' || b.type === 'Zebra' || b.type === 'DDT') && p.type === 'bomb') {
-                  dmgMult = 0.0;
-                } else if ((b.type === 'White' || b.type === 'Zebra') && p.type === 'iceRing') {
-                  dmgMult = 0.0;
-                } else if (b.type === 'Purple' && (p.type === 'beam' || p.type === 'magic')) {
-                  dmgMult = 0.0;
-                } else if (b.type === 'Lead' && isSharp) {
-                  dmgMult = 0.0;
-                } else if (b.type === 'DDT' && isSharp) {
-                  dmgMult = 0.0;
-                }
-
-                if (b.isFrozen && p.type === 'dart') {
+                const dmgType = p.damageType || 'sharp';
+                if (!canAttackBloon(dmgType, b.type, b.isFrozen)) {
                   dmgMult = 0.0;
                 }
 
@@ -1390,8 +1563,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             range: range,
             baseCooldown: selectedShopTower === 'hero' ? 45 : TOWER_STATS[selectedShopTower].baseCooldown,
             cooldown: 0,
-            damage: 1,
-            pierce: 1,
+            damage: selectedShopTower === 'hero' ? 1 : TOWER_STATS[selectedShopTower].baseDamage,
+            pierce: selectedShopTower === 'hero' ? 2 : TOWER_STATS[selectedShopTower].basePierce,
             cost: selectedShopTower === 'hero' ? 0 : TOWER_STATS[selectedShopTower].cost,
             popCount: 0,
             targetMode: 'First',
@@ -2031,21 +2204,42 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               </div>
 
               {/* Stats card */}
-              <div className="grid grid-cols-2 gap-2 bg-black/30 p-3 rounded-xl border border-white/10 shadow-inner">
-                <div className="flex flex-col">
-                  <span className="text-[9px] text-[var(--app-accent)] uppercase font-black">Combat Pops</span>
-                  <span className="text-sm font-black text-emerald-400">{activePlacedTower.popCount} Pops</span>
+              <div className="flex flex-col gap-2.5 bg-black/30 p-3 rounded-xl border border-white/10 shadow-inner text-xs">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-[var(--app-accent)] uppercase font-black">Combat Pops</span>
+                    <span className="text-sm font-black text-emerald-400">{activePlacedTower.popCount} Pops</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-[var(--app-accent)] uppercase font-black">
+                      {activePlacedTower.type === 'hero' ? 'Upgrade Rank' : 'Crosspath Code'}
+                    </span>
+                    <span className="text-sm font-black text-indigo-300">
+                      {activePlacedTower.type === 'hero'
+                        ? `Level ${activePlacedTower.level}`
+                        : `${activePlacedTower.upgradeLevels ? activePlacedTower.upgradeLevels.join('-') : '0-0-0'}`}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] text-[var(--app-accent)] uppercase font-black">
-                    {activePlacedTower.type === 'hero' ? 'Upgrade Rank' : 'Crosspath Code'}
-                  </span>
-                  <span className="text-sm font-black text-indigo-300">
-                    {activePlacedTower.type === 'hero'
-                      ? `Level ${activePlacedTower.level}`
-                      : `${activePlacedTower.upgradeLevels ? activePlacedTower.upgradeLevels.join('-') : '0-0-0'}`}
-                  </span>
-                </div>
+
+                {activePlacedTower.type !== 'farm' && activePlacedTower.type !== 'pool' && (
+                  <div className="grid grid-cols-3 gap-1 border-t border-white/10 pt-2 text-center">
+                    <div className="bg-white/5 p-1 rounded">
+                      <div className="text-[8px] uppercase text-amber-400 font-extrabold leading-tight">Damage</div>
+                      <div className="text-xs font-black">{activePlacedTower.damage}</div>
+                    </div>
+                    <div className="bg-white/5 p-1 rounded">
+                      <div className="text-[8px] uppercase text-cyan-400 font-extrabold leading-tight">Pierce</div>
+                      <div className="text-xs font-black">{activePlacedTower.pierce}</div>
+                    </div>
+                    <div className="bg-white/5 p-1 rounded">
+                      <div className="text-[8px] uppercase text-rose-450 font-extrabold leading-tight">Rate</div>
+                      <div className="text-xs font-black">
+                        {activePlacedTower.baseCooldown > 1000 ? 'N/A' : `${(60 / activePlacedTower.baseCooldown).toFixed(1)}/s`}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Target Mode buttons */}
@@ -2177,27 +2371,58 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                   🔒 {lockReason}
                                 </div>
                               ) : nextUpgrade ? (
-                                (() => {
-                                  const canAfford = cash >= nextUpgrade.cost;
-                                  return (
-                                    <button
-                                      id={`btn-upgrade-p${pIndex}-lvl${currentLvl}`}
-                                      disabled={!canAfford}
-                                      onClick={() => upgradeTower(activePlacedTower, pIndex)}
-                                      className={`w-full py-1.5 px-2 text-[10px] font-black rounded-lg border-b-2 flex justify-between items-center transition-all uppercase cursor-pointer ${
-                                        canAfford
-                                          ? 'bg-blue-600 hover:bg-blue-500 border-blue-800 text-white shadow'
-                                          : 'bg-[var(--app-subpanel)] border border-black/25 text-white/30 cursor-not-allowed'
-                                      }`}
-                                    >
-                                      <span className="flex flex-col text-left max-w-[130px]">
-                                        <span className="font-sans font-black text-[9.5px] text-white leading-tight line-clamp-1">{nextUpgrade.name}</span>
-                                        <span className="text-[7px] font-bold text-white opacity-80 line-clamp-1 leading-none">{nextUpgrade.description}</span>
+                                <div className="flex flex-col gap-1.5 w-full">
+                                  {(() => {
+                                    const canAfford = cash >= nextUpgrade.cost;
+                                    return (
+                                      <button
+                                        id={`btn-upgrade-p${pIndex}-lvl${currentLvl}`}
+                                        disabled={!canAfford}
+                                        onClick={() => upgradeTower(activePlacedTower, pIndex)}
+                                        className={`w-full py-1.5 px-2 text-[10px] font-black rounded-lg border-b-2 flex justify-between items-center transition-all uppercase cursor-pointer ${
+                                          canAfford
+                                            ? 'bg-blue-600 hover:bg-blue-500 border-blue-800 text-white shadow'
+                                            : 'bg-[var(--app-subpanel)] border border-black/25 text-white/30 cursor-not-allowed'
+                                        }`}
+                                      >
+                                        <span className="flex flex-col text-left max-w-[130px]">
+                                          <span className="font-sans font-black text-[9.5px] text-white leading-tight line-clamp-1">{nextUpgrade.name}</span>
+                                          <span className="text-[7px] font-bold text-white opacity-80 line-clamp-1 leading-none">{nextUpgrade.description}</span>
+                                        </span>
+                                        <span className="font-sans font-black text-[10.5px] text-yellow-300 shrink-0">${nextUpgrade.cost}</span>
+                                      </button>
+                                    );
+                                  })()}
+
+                                  {/* Stat Badges for Next Upgrade */}
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {nextUpgrade.effects.damage && (
+                                      <span className="text-[7.5px] leading-none bg-amber-950/60 border border-amber-500/40 text-amber-300 px-1 py-0.5 rounded font-black uppercase">
+                                        +{nextUpgrade.effects.damage} DMG
                                       </span>
-                                      <span className="font-sans font-black text-[10.5px] text-yellow-300 shrink-0">${nextUpgrade.cost}</span>
-                                    </button>
-                                  );
-                                })()
+                                    )}
+                                    {nextUpgrade.effects.pierce && (
+                                      <span className="text-[7.5px] leading-none bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 px-1 py-0.5 rounded font-black uppercase">
+                                        +{nextUpgrade.effects.pierce} Pierce
+                                      </span>
+                                    )}
+                                    {nextUpgrade.effects.range && (
+                                      <span className="text-[7.5px] leading-none bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 px-1 py-0.5 rounded font-black uppercase">
+                                        +{nextUpgrade.effects.range} Range
+                                      </span>
+                                    )}
+                                    {nextUpgrade.effects.cooldownMult && (
+                                      <span className="text-[7.5px] leading-none bg-rose-950/60 border border-rose-500/40 text-rose-305 px-1 py-0.5 rounded font-black uppercase">
+                                        +{Math.round((1 - nextUpgrade.effects.cooldownMult) * 100)}% Speed
+                                      </span>
+                                    )}
+                                    {nextUpgrade.effects.canSeeCamo && (
+                                      <span className="text-[7.5px] leading-none bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 px-1 py-0.5 rounded font-black uppercase">
+                                        👁 Camo
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
                               ) : null}
                             </div>
                           );
@@ -2242,7 +2467,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </div>
 
         {/* Center Sandbox Canvas Game Stage */}
-        <div id="game-stage-container" ref={containerRef} className="flex-1 bg-[var(--app-bg)]/85 relative flex items-center justify-center p-3 overflow-hidden">
+        <div
+          id="game-stage-container"
+          ref={containerRef}
+          className={`flex-1 bg-[var(--app-bg)]/85 relative flex items-center justify-center p-3 overflow-hidden ${
+            gameMode === 'sandbox' ? 'flex-col xl:flex-row gap-6 overflow-y-auto' : ''
+          }`}
+        >
           <canvas
             id="arena-canvas"
             ref={canvasRef}
@@ -2253,6 +2484,186 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             onClick={handleCanvasClick}
             className="w-full max-w-2xl aspect-square bg-slate-900 border-4 border-black/30 rounded-3xl cursor-crosshair shadow-2xl block"
           />
+
+          {gameMode === 'sandbox' && (
+            <div
+              id="sandbox-admin-panel"
+              className="w-full xl:w-96 bg-slate-950/95 border-4 border-amber-500/35 p-4 rounded-3xl shadow-2xl flex flex-col gap-3 font-sans shrink-0 backdrop-blur text-white border-b-8"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl">👩‍🔬</span>
+                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider">Sandbox Laboratory</span>
+                </div>
+                <span className="text-[9px] bg-amber-500/10 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/20 uppercase tracking-widest animate-pulse">
+                  Creative active
+                </span>
+              </div>
+
+              {/* Tabs */}
+              <div className="grid grid-cols-2 gap-1 bg-black/25 p-1 rounded-xl border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setSandboxTab('spawn')}
+                  className={`py-1.5 text-[10px] font-black uppercase rounded-lg transition-all cursor-pointer ${
+                    sandboxTab === 'spawn'
+                      ? 'bg-amber-500 text-slate-950 shadow'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  🎈 Spawn Bloons
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSandboxTab('cheats')}
+                  className={`py-1.5 text-[10px] font-black uppercase rounded-lg transition-all cursor-pointer ${
+                    sandboxTab === 'cheats'
+                      ? 'bg-amber-500 text-slate-950 shadow'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  ⚡ Cheat Panel
+                </button>
+              </div>
+
+              {sandboxTab === 'spawn' ? (
+                <div className="flex flex-col gap-3">
+                  {/* Modifiers checkboxes */}
+                  <div className="grid grid-cols-3 gap-1 bg-black/15 p-2 rounded-xl border border-white/5 text-[10px] uppercase font-black">
+                    <label className="flex items-center justify-center gap-1.5 cursor-pointer text-blue-300 hover:brightness-110">
+                      <input
+                        type="checkbox"
+                        checked={sandboxCamo}
+                        onChange={(e) => setSandboxCamo(e.target.checked)}
+                        className="rounded accent-blue-500 cursor-pointer"
+                      />
+                      <span>Camo</span>
+                    </label>
+                    <label className="flex items-center justify-center gap-1.5 cursor-pointer text-emerald-300 hover:brightness-110">
+                      <input
+                        type="checkbox"
+                        checked={sandboxRegrow}
+                        onChange={(e) => setSandboxRegrow(e.target.checked)}
+                        className="rounded accent-emerald-500 cursor-pointer"
+                      />
+                      <span>Regrow</span>
+                    </label>
+                    <label className="flex items-center justify-center gap-1.5 cursor-pointer text-rose-300 hover:brightness-110">
+                      <input
+                        type="checkbox"
+                        checked={sandboxFortified}
+                        onChange={(e) => setSandboxFortified(e.target.checked)}
+                        className="rounded accent-rose-500 cursor-pointer"
+                      />
+                      <span>Fortified</span>
+                    </label>
+                  </div>
+
+                  {/* Bloons Grid */}
+                  <div className="grid grid-cols-3 gap-1.5 overflow-y-auto max-h-56 pr-1 border border-white/5 bg-black/15 p-2 rounded-xl">
+                    {[
+                      { type: 'Red', emoji: '🔴', colorClass: 'hover:bg-red-500/20 hover:border-red-500/55' },
+                      { type: 'Blue', emoji: '🔵', colorClass: 'hover:bg-blue-500/20 hover:border-blue-500/55' },
+                      { type: 'Green', emoji: '🟢', colorClass: 'hover:bg-green-500/20 hover:border-green-500/55' },
+                      { type: 'Yellow', emoji: '🟡', colorClass: 'hover:bg-yellow-500/20 hover:border-yellow-500/55' },
+                      { type: 'Pink', emoji: '🌸', colorClass: 'hover:bg-pink-500/20 hover:border-pink-500/55' },
+                      { type: 'Black', emoji: '⚫', colorClass: 'hover:bg-slate-500/20 hover:border-slate-500/55' },
+                      { type: 'White', emoji: '⚪', colorClass: 'hover:bg-neutral-200/20 hover:border-neutral-200/55' },
+                      { type: 'Purple', emoji: '🟪', colorClass: 'hover:bg-purple-500/20 hover:border-purple-500/55' },
+                      { type: 'Lead', emoji: '🌪️', colorClass: 'hover:bg-zinc-600/30 hover:border-zinc-500/55' },
+                      { type: 'Zebra', emoji: '🏁', colorClass: 'hover:bg-zinc-400/20 hover:border-zinc-400/55' },
+                      { type: 'Rainbow', emoji: '🌈', colorClass: 'hover:bg-indigo-500/20 hover:border-indigo-500/55' },
+                      { type: 'Ceramic', emoji: '🧱', colorClass: 'hover:bg-amber-600/20 hover:border-amber-600/55' },
+                      { type: 'MOAB', emoji: '🛸', colorClass: 'hover:bg-cyan-500/20 hover:border-cyan-500/55' },
+                      { type: 'BFB', emoji: '🎈', colorClass: 'hover:border-red-600 hover:bg-red-600/20' },
+                      { type: 'ZOMG', emoji: '🛸', colorClass: 'hover:border-green-600 hover:bg-green-600/20' },
+                      { type: 'DDT', emoji: '👾', colorClass: 'hover:border-slate-600 hover:bg-slate-600/20' },
+                      { type: 'BAD', emoji: '🦖', colorClass: 'hover:border-purple-600 hover:bg-purple-600/20' },
+                    ].map((item) => (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => spawnSingleBloon(item.type, sandboxCamo, sandboxRegrow, sandboxFortified)}
+                        className={`p-1.5 bg-slate-900 border border-white/5 rounded-xl transition-all flex flex-col items-center justify-center cursor-pointer ${item.colorClass}`}
+                      >
+                        <span className="text-base">{item.emoji}</span>
+                        <span className="text-[8px] font-black tracking-wider text-slate-300 uppercase mt-1 truncate max-w-full">
+                          {item.type}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCash((c) => c + 100000);
+                      floatingTextsRef.current.push({
+                        id: `cash_${Date.now()}`,
+                        x: 500,
+                        y: 300,
+                        text: '+$100,000 Cash',
+                        color: '#34d399',
+                        life: 30,
+                      });
+                    }}
+                    className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 font-display font-black tracking-wider text-white rounded-xl transition-all flex items-center justify-center gap-1.5 border-b-4 border-emerald-800 shadow cursor-pointer text-[10px] uppercase italic"
+                  >
+                    <Coins className="w-3.5 h-3.5" /> Inject +$100,000 Cash
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLives((l) => l + 5000);
+                      floatingTextsRef.current.push({
+                        id: `lives_${Date.now()}`,
+                        x: 500,
+                        y: 320,
+                        text: '+5,000 Lives',
+                        color: '#f87171',
+                        life: 30,
+                      });
+                    }}
+                    className="w-full py-2.5 px-3 bg-rose-600 hover:bg-rose-500 font-display font-black tracking-wider text-white rounded-xl transition-all flex items-center justify-center gap-1.5 border-b-4 border-rose-800 shadow cursor-pointer text-[10px] uppercase italic"
+                  >
+                    <Heart className="w-3.5 h-3.5 animate-pulse" /> Inject +5,000 Lives
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      bloonsRef.current = [];
+                    }}
+                    className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 font-display font-black tracking-wider text-white rounded-xl transition-all flex items-center justify-center gap-1.5 border-b-4 border-indigo-800 shadow cursor-pointer text-[10px] uppercase italic"
+                  >
+                    <X className="w-3.5 h-3.5" /> Vaporize active Bloons
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      towersRef.current = [];
+                      bloonsRef.current = [];
+                      projectilesRef.current = [];
+                      particlesRef.current = [];
+                      setCash(1000000);
+                      setLives(100000);
+                      setRound(1);
+                      setRoundInProgress(false);
+                      setSelectedShopTower(null);
+                      setSelectedPlacedTowerId(null);
+                    }}
+                    className="w-full py-3 px-3 mt-1.5 bg-amber-600 hover:bg-amber-500 font-display font-black tracking-wider text-white rounded-xl transition-all flex items-center justify-center gap-1.5 border-b-4 border-amber-800 shadow cursor-pointer text-[10px] uppercase italic"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Wipe sandbox Board
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right Monkey Store (Deploy options list) */}

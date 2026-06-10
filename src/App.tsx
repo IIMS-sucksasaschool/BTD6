@@ -39,7 +39,7 @@ export default function App() {
   const [selectedMapId, setSelectedMapId] = useState<string>('monkey_meadow');
   const [selectedHero, setSelectedHero] = useState<HeroType>('quincy');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Medium');
-  const [selectedGameMode, setSelectedGameMode] = useState<'campaign' | 'endless'>('campaign');
+  const [selectedGameMode, setSelectedGameMode] = useState<'campaign' | 'endless' | 'sandbox'>('campaign');
 
   // GameOver Status popup modal state
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
@@ -301,7 +301,7 @@ export default function App() {
   };
 
   // Start campaign match callback
-  const handleStartGame = (mapId: string, hero: HeroType, diff: Difficulty, mode: 'campaign' | 'endless') => {
+  const handleStartGame = (mapId: string, hero: HeroType, diff: Difficulty, mode: 'campaign' | 'endless' | 'sandbox') => {
     setSelectedMapId(mapId);
     setSelectedHero(hero);
     setSelectedDifficulty(diff);

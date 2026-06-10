@@ -243,6 +243,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 200,
     baseRange: 130,
     baseCooldown: 50,
+    baseDamage: 1,
+    basePierce: 2,
     description: 'Shoots a single straight dart with minor piercing power. Cheap and versatile.',
     upgrades: [
       [
@@ -272,6 +274,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 280,
     baseRange: 85,
     baseCooldown: 70,
+    baseDamage: 1,
+    basePierce: 1,
     description: 'Shoots a burst of 8 sharp tacks in circular directions. Best placed in curves.',
     upgrades: [
       [
@@ -301,6 +305,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 350,
     baseRange: 9999,
     baseCooldown: 120,
+    baseDamage: 2,
+    basePierce: 1,
     description: 'Deals massive single-target damage to ANY bloon on screen instantly.',
     upgrades: [
       [
@@ -330,6 +336,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 525,
     baseRange: 110,
     baseCooldown: 90,
+    baseDamage: 1,
+    basePierce: 14,
     description: 'Fires slow explosive bombs that deal area-of-effect splash damage nearby.',
     upgrades: [
       [
@@ -359,6 +367,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 300,
     baseRange: 80,
     baseCooldown: 80,
+    baseDamage: 0,
+    basePierce: 40,
     description: 'Emits a freezing blast that completely freezes nearby bloons in place.',
     upgrades: [
       [
@@ -388,6 +398,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 2500,
     baseRange: 150,
     baseCooldown: 12,
+    baseDamage: 1,
+    basePierce: 1,
     description: 'Shoots a rapid stream of energy darts. Extremely expensive but elite.',
     upgrades: [
       [
@@ -417,6 +429,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 325,
     baseRange: 110,
     baseCooldown: 60,
+    baseDamage: 1,
+    basePierce: 4,
     description: 'Launches spinning boomerangs that fly in wide arcs and can hit multiple targets over and over.',
     upgrades: [
       [
@@ -446,6 +460,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 500,
     baseRange: 110,
     baseCooldown: 40,
+    baseDamage: 1,
+    basePierce: 2,
     description: 'Disciplined fighter who throws fast shurikens and inherently detects Camo bloons.',
     upgrades: [
       [
@@ -475,6 +491,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 260,
     baseRange: 90,
     baseCooldown: 50,
+    baseDamage: 0,
+    basePierce: 1,
     description: 'Shoots globs of sticky, slowing glue. Upgradable to dissolve layers.',
     upgrades: [
       [
@@ -504,6 +522,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 380,
     baseRange: 115,
     baseCooldown: 45,
+    baseDamage: 1,
+    basePierce: 3,
     description: 'Monkey Wizard who fires mystical heat bolts, flame streams, and magical blasts.',
     upgrades: [
       [
@@ -533,6 +553,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 550,
     baseRange: 110,
     baseCooldown: 60,
+    baseDamage: 1,
+    basePierce: 15,
     description: 'Throws highly unstable acid potions that dissolve multiple bloons in splashes.',
     upgrades: [
       [
@@ -562,6 +584,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 400,
     baseRange: 110,
     baseCooldown: 50,
+    baseDamage: 1,
+    basePierce: 1,
     description: 'Nature guardian who throws sharp wooden thorns in multi-directional fans.',
     upgrades: [
       [
@@ -591,6 +615,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 1250,
     baseRange: 60,
     baseCooldown: 300,
+    baseDamage: 0,
+    basePierce: 0,
     description: 'Banana Farm. Generates solid bonus income cash of +$80 after surviving every wave.',
     upgrades: [
       [
@@ -620,6 +646,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 325,
     baseRange: 135,
     baseCooldown: 40,
+    baseDamage: 1,
+    basePierce: 2,
     description: 'Aquatic submarine. CAN ONLY BE placed on Natural Water or Water Pools. Fires tracking homing torpedoes.',
     upgrades: [
       [
@@ -649,6 +677,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 500,
     baseRange: 120,
     baseCooldown: 50,
+    baseDamage: 1,
+    basePierce: 4,
     description: 'Aquatic pirate warship. CAN ONLY BE placed on Natural Water or Water Pools. Shoots grapes and side cannons.',
     upgrades: [
       [
@@ -678,6 +708,8 @@ export const TOWER_STATS: Record<Exclude<TowerType, 'hero'>, TowerStats> = {
     cost: 150,
     baseRange: 55,
     baseCooldown: 99999,
+    baseDamage: 0,
+    basePierce: 0,
     description: 'Portable Water Pool. Creates a custom water surface on land allowing water monkeys to be placed anywhere.',
     upgrades: [[], [], []]
   }

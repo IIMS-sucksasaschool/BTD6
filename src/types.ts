@@ -24,6 +24,8 @@ export interface TowerStats {
   cost: number;
   baseRange: number;
   baseCooldown: number; // in frames or milliseconds
+  baseDamage: number;
+  basePierce: number;
   description: string;
   upgrades: [Upgrade[], Upgrade[], Upgrade[]];
 }
@@ -91,6 +93,8 @@ export interface Projectile {
   targetBloonId?: string; // for homing or direct hit
   splashRadius?: number;
   rangeRemaining: number; // disappear if too far
+  damageType?: 'sharp' | 'explosive' | 'cold' | 'magic' | 'plasma' | 'acid' | 'normal';
+  upgradeLevels?: [number, number, number];
 }
 
 export interface Part {
